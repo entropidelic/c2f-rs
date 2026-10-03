@@ -172,8 +172,9 @@ fn intensity_matches_every_burnt_cell() {
             let fuel = coefficients(SCENARIO, landscape.fuels[cell].unwrap()).unwrap();
             let computed = surface_fire(fuel, wind_speed).intensity;
 
-            // C2F-W prints six significant digits.
-            if (computed - expected).abs() > expected * 1e-5 {
+            // C2F-W rounds intensity up to two decimals, then prints six significant digits.
+            let tolerance = 0.01 + expected * 1e-5;
+            if (computed - expected).abs() > tolerance {
                 mismatches.push(format!(
                     "sim {simulation}, cell {cell}: expected {expected}, computed {computed}"
                 ));

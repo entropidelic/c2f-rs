@@ -158,13 +158,24 @@ changes, so the weather timing makes no difference there. For reference data wit
 weather, the test will expand the weather into one row per minute following C2F-W's
 timing, and run c2f-rs with a 1-minute weather period. The workaround stays in the test.
 
+### Values are not rounded inside the model
+
+C2F-W rounds up to two decimals every value that ends up in an output file: rates of
+spread, intensities and flame lengths. It does it where the values are computed, so the
+rounded numbers are also the ones the model works with. This has been there since the
+first C2F-W version, without a comment or a citation. It looks like a way of presenting
+outputs with two decimals.
+
+c2f-rs keeps full precision. Rounding, if any, belongs where outputs are written.
+
+Validation: the tests allow for C2F-W's rounding (up to 0.01).
+
 ## C2F-W quirks still reproduced
 
 These are reproduced for now. Each one will either become a difference above, or stay
 because it is part of the model.
 
 - The Scott & Burgan length-to-breadth ratio is Anderson's formula raised to the power 0.45 (uncited).
-- Intensity is rounded up to two decimals. The rate of spread written in messages is too.
 - A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
   a message every period. The cell sending them does not burn out while that happens.
 

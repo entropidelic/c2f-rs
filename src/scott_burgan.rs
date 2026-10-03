@@ -94,9 +94,7 @@ fn flame_length(fuel: &FuelCoefficients, wind_speed: f32) -> f32 {
 
 /// Byram's relation between flame length and intensity, solved for intensity.
 fn intensity(flame_length: f32) -> f32 {
-    let intensity = 259.833 * flame_length.powf(2.174);
-    // C2F-W rounds the intensity up to two decimals.
-    (intensity * 100.0).ceil() / 100.0
+    259.833 * flame_length.powf(2.174)
 }
 
 #[cfg(test)]
