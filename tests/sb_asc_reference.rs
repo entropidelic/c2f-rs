@@ -1,95 +1,148 @@
-//! Compares the Scott & Burgan fire behaviour against C2F-W outputs for the
-//! 7x7 `sb-asc` instance: moisture scenario 1, wind of 10 km/h from the south
-//! during the whole fire, and no elevation data.
+//! Compares c2f-rs against C2F-W outputs for the 7x7 `sb-asc` instance: Scott & Burgan
+//! fuels, moisture scenario 1, wind of 10 km/h from the south for 5 hours, no elevation.
+//! C2F-W ran 113 fires there, each one from a random ignition cell that it logged.
 
-use c2f_rs::ellipse::{FireEllipse, heading_from_wind};
+use c2f_rs::landscape::Landscape;
 use c2f_rs::scott_burgan::{coefficients, surface_fire};
+use c2f_rs::simulation::{Settings, simulate};
+use c2f_rs::weather::{Weather, read_weather};
 use std::fs;
+use std::path::Path;
 
 const DATA: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/sb-asc");
 const SCENARIO: u8 = 1;
-const WIND_SPEED: f32 = 10.0;
-const WIND_FROM: f64 = 180.0;
-const COLUMNS: usize = 7;
 const SIMULATIONS: usize = 113;
 
-/// Fuel code of every cell, numbered row by row from the top-left corner.
-fn read_fuel_codes() -> Vec<u16> {
-    let text = fs::read_to_string(format!("{DATA}/input/fuels.asc")).unwrap();
-    let header_lines = 6;
+/// A message as (from, to, period, rate), with cells numbered from 0 and the rate in
+/// hundredths of m/min. C2F-W writes the rate rounded up to two decimals.
+type MessageKey = (usize, usize, u32, i64);
+
+fn read_landscape() -> Landscape {
+    let fuels = format!("{DATA}/input/fuels.asc");
+    let lookup_table = format!("{DATA}/input/spain_lookup_table.csv");
+    Landscape::read(Path::new(&fuels), Path::new(&lookup_table)).unwrap()
+}
+
+fn read_input_weather() -> Vec<Weather> {
+    read_weather(Path::new(&format!("{DATA}/input/Weather.csv"))).unwrap()
+}
+
+/// Ignition cell of every simulation, numbered from 0.
+fn read_ignition_cells() -> Vec<usize> {
+    let text = fs::read_to_string(format!("{DATA}/expected/ignition_and_weather_log.csv")).unwrap();
     text.lines()
-        .skip(header_lines)
-        .flat_map(|line| line.split_whitespace())
-        .map(|value| value.parse().unwrap())
+        .skip(1)
+        .map(|line| {
+            let cell: usize = line.split(',').nth(1).unwrap().parse().unwrap();
+            cell - 1
+        })
         .collect()
 }
 
-/// Direction from one cell to another, in degrees (0 = east, counterclockwise).
-/// Cell ids start at 1, as in C2F-W.
-fn direction_between(from_cell: usize, to_cell: usize) -> f64 {
-    let from_row = (from_cell - 1) / COLUMNS;
-    let from_column = (from_cell - 1) % COLUMNS;
-    let to_row = (to_cell - 1) / COLUMNS;
-    let to_column = (to_cell - 1) % COLUMNS;
-
-    let east = to_column as f64 - from_column as f64;
-    let north = from_row as f64 - to_row as f64;
-    north.atan2(east).to_degrees().rem_euclid(360.0)
+/// Number of burnt cells of every simulation, from the results tables in C2F-W's log.
+fn read_burnt_counts() -> Vec<usize> {
+    let text = fs::read_to_string(format!("{DATA}/expected/log.txt")).unwrap();
+    text.lines()
+        .filter(|line| line.trim_start().starts_with("Burnt"))
+        .map(|line| line.split_whitespace().nth(1).unwrap().parse().unwrap())
+        .collect()
 }
 
-/// Each message line is `source cell, target cell, period, rate of spread`,
-/// written when the fire from the source reaches the centre of the target.
-/// The rate is the source's spread rate towards the target, rounded up to
-/// two decimals.
-#[test]
-fn spread_rate_towards_each_neighbour_matches_every_message() {
-    let fuel_codes = read_fuel_codes();
-    let heading = heading_from_wind(WIND_FROM);
-    let mut checked = 0;
-    let mut mismatches = Vec::new();
-
-    for simulation in 1..=SIMULATIONS {
-        let path = format!("{DATA}/expected/Messages/MessagesFile{simulation:03}.csv");
-        for line in fs::read_to_string(path).unwrap().lines() {
+/// Messages of a simulation, sorted. C2F-W writes them in hash map order.
+fn read_expected_messages(simulation: usize) -> Vec<MessageKey> {
+    let path = format!("{DATA}/expected/Messages/MessagesFile{simulation:03}.csv");
+    let mut messages: Vec<MessageKey> = fs::read_to_string(path)
+        .unwrap()
+        .lines()
+        .map(|line| {
             let fields: Vec<&str> = line.split(',').collect();
-            let source: usize = fields[0].parse().unwrap();
-            let target: usize = fields[1].parse().unwrap();
-            let expected_rate: f64 = fields[3].parse().unwrap();
+            let from: usize = fields[0].parse().unwrap();
+            let to: usize = fields[1].parse().unwrap();
+            let period: u32 = fields[2].parse().unwrap();
+            let rate: f64 = fields[3].parse().unwrap();
+            (from - 1, to - 1, period, (rate * 100.0).round() as i64)
+        })
+        .collect();
+    messages.sort();
+    messages
+}
 
-            let fuel = coefficients(SCENARIO, fuel_codes[source - 1]).unwrap();
-            let fire = surface_fire(fuel, WIND_SPEED);
-            let ellipse = FireEllipse::new(
-                fire.head_ros,
-                fire.back_ros,
-                fire.length_to_breadth,
-                heading,
-            );
-            let rate = ellipse.spread_rate_towards(direction_between(source, target)) as f32;
-            let rounded_rate = (f64::from(rate) * 100.0).ceil() / 100.0;
+fn describe_difference(computed: &[MessageKey], expected: &[MessageKey]) -> String {
+    let missing: Vec<_> = expected
+        .iter()
+        .filter(|message| !computed.contains(message))
+        .take(5)
+        .collect();
+    let unexpected: Vec<_> = computed
+        .iter()
+        .filter(|message| !expected.contains(message))
+        .take(5)
+        .collect();
+    format!(
+        "  {} messages, expected {}\n  missing (first 5): {missing:?}\n  unexpected (first 5): {unexpected:?}",
+        computed.len(),
+        expected.len()
+    )
+}
 
-            if (rounded_rate - expected_rate).abs() > 1e-4 {
-                mismatches.push(format!(
-                    "sim {simulation}: {line} -> computed {rounded_rate}"
-                ));
-            }
-            checked += 1;
+#[test]
+fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
+    let landscape = read_landscape();
+    let weather = read_input_weather();
+    let settings = Settings {
+        moisture_scenario: SCENARIO,
+        ..Settings::default()
+    };
+    let ignition_cells = read_ignition_cells();
+    let burnt_counts = read_burnt_counts();
+    assert_eq!(ignition_cells.len(), SIMULATIONS);
+    assert_eq!(burnt_counts.len(), SIMULATIONS);
+
+    let mut failures = Vec::new();
+    for (index, &ignition) in ignition_cells.iter().enumerate() {
+        let simulation = index + 1;
+        let fire = simulate(&landscape, &weather, ignition, &settings).unwrap();
+
+        if fire.burnt_cells.len() != burnt_counts[index] {
+            failures.push(format!(
+                "sim {simulation}: {} burnt cells, expected {}",
+                fire.burnt_cells.len(),
+                burnt_counts[index]
+            ));
+        }
+
+        let mut messages: Vec<MessageKey> = fire
+            .messages
+            .iter()
+            .map(|message| {
+                let rate_in_hundredths = (f64::from(message.rate) * 100.0).ceil() as i64;
+                (message.from, message.to, message.period, rate_in_hundredths)
+            })
+            .collect();
+        messages.sort();
+        let expected_messages = read_expected_messages(simulation);
+        if messages != expected_messages {
+            failures.push(format!(
+                "sim {simulation}: messages differ\n{}",
+                describe_difference(&messages, &expected_messages)
+            ));
         }
     }
 
-    assert!(checked > 0);
     assert!(
-        mismatches.is_empty(),
-        "{} of {checked} messages differ:\n{}",
-        mismatches.len(),
-        mismatches.join("\n")
+        failures.is_empty(),
+        "{} problems:\n{}",
+        failures.len(),
+        failures.join("\n")
     );
 }
 
-/// The intensity grid holds, for every burnt cell, the intensity of its own
-/// fuel under the (constant) weather. Unburnt cells are 0.
+/// The intensity grid holds, for every burnt cell, the intensity of its own fuel under
+/// the weather, which does not change in this instance. Unburnt cells are 0.
 #[test]
 fn intensity_matches_every_burnt_cell() {
-    let fuel_codes = read_fuel_codes();
+    let landscape = read_landscape();
+    let wind_speed = read_input_weather()[0].wind_speed;
     let mut checked = 0;
     let mut mismatches = Vec::new();
 
@@ -101,19 +154,18 @@ fn intensity_matches_every_burnt_cell() {
             .skip(6)
             .flat_map(|line| line.split_whitespace());
 
-        for (cell_index, value) in values.enumerate() {
+        for (cell, value) in values.enumerate() {
             let expected: f32 = value.parse().unwrap();
             if expected == 0.0 {
                 continue;
             }
-            let fuel = coefficients(SCENARIO, fuel_codes[cell_index]).unwrap();
-            let computed = surface_fire(fuel, WIND_SPEED).intensity;
+            let fuel = coefficients(SCENARIO, landscape.fuels[cell].unwrap()).unwrap();
+            let computed = surface_fire(fuel, wind_speed).intensity;
 
             // C2F-W prints six significant digits.
             if (computed - expected).abs() > expected * 1e-5 {
                 mismatches.push(format!(
-                    "sim {simulation}, cell {}: expected {expected}, computed {computed}",
-                    cell_index + 1
+                    "sim {simulation}, cell {cell}: expected {expected}, computed {computed}"
                 ));
             }
             checked += 1;

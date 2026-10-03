@@ -8,11 +8,12 @@ a time, and every layer is checked against outputs of the original C++ simulator
 
 ## Status
 
-Layer 1 of the [roadmap](docs/roadmap.md) is done: the Scott & Burgan surface fire model
-and the elliptical fire shape. They reproduce C2F-W's rate of spread towards every
-neighbour and the fire intensity of every burnt cell in its `sb-asc` test instance.
+Layers 1 and 2 of the [roadmap](docs/roadmap.md) are done. As a library, c2f-rs can read a
+fuel raster and a weather file and simulate one fire from a given ignition cell, with the
+Scott & Burgan fuel model. On C2F-W's `sb-asc` test instance it reproduces all 113 reference
+fires: the same burnt cells and the same messages (cells, time and rate of spread).
 
-There is no simulation yet.
+There is no command line program or output files yet.
 
 ## Documentation
 
@@ -22,9 +23,12 @@ There is no simulation yet.
 
 ## Code
 
+- `src/simulation.rs`: fire spread over the grid, one fire period at a time.
 - `src/scott_burgan.rs`: Scott & Burgan surface fire behaviour (rate of spread, flame
   length, intensity).
 - `src/ellipse.rs`: elliptical fire shape and wind direction conventions.
+- `src/landscape.rs`: the grid of cells and their fuels, read from `fuels.asc`.
+- `src/weather.rs`: weather rows, read from `Weather.csv`.
 - `tests/sb_asc_reference.rs`: comparison against C2F-W outputs.
 
 ## Running the tests

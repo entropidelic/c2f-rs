@@ -23,3 +23,4 @@ Output formats:
   Cells are numbered from 1, row by row, starting at the top-left corner.
 - `SurfaceIntensity/SurfaceIntensityNNN.asc`: intensity of every cell in kW/m, 0 if it did not burn.
 - `ignition_and_weather_log.csv`: ignition cell and weather file of every simulation.
+- `log.txt`: C2F-W's console output, with a results table (burnt cell count, ...) for every simulation.

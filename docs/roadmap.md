@@ -20,6 +20,18 @@ The landscape is a grid of square cells. When a cell burns:
 5. The weather changes every 60 minutes. The fire stops when no cell is burning or
    the weather rows run out.
 
+## Simplifications
+
+Compared with C2F-W, the propagation engine:
+
+- keeps one flag per cell ("has fuel and has not caught fire yet") instead of per-cell maps of
+  directions that are trimmed as neighbours burn. Both give the same result.
+- has no "repeat" codes passed between cells. A fire that sends no message in a period
+  simply carries on while some cell is still burning.
+- runs a single fire per call. Multi-year runs are dropped.
+- reads the rasters directly, without writing `Data.csv` into the input folder.
+- numbers cells from 0. C2F-W numbers them from 1 in its files.
+
 ## Validation strategy
 
 The C2F-W repository ships reference outputs (`test/target_results.zip`): 113 simulations
@@ -39,9 +51,9 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 
 | # | Layer | Validated against | Status |
 |---|-------|-------------------|--------|
-| 1 | Scott & Burgan surface fire for one cell, fire ellipse, wind direction | `sb-asc`: 4782 messages (rate towards each neighbour) and 4739 cell intensities | **Done** |
-| 2 | Grid propagation: read fuels/lookup/weather, time steps, messages, ignition from a fixed cell, weather periods, end of fire | `sb-asc`: burn scar and messages of all 113 simulations | Next |
-| 3 | Outputs and command line: grids, messages, intensity, flame length | `sb-asc` output files | Planned |
+| 1 | Scott & Burgan surface fire for one cell, fire ellipse, wind direction | `sb-asc`: 4739 cell intensities | **Done** |
+| 2 | Grid propagation: read fuels/lookup/weather, time steps, messages, ignition from a fixed cell, weather periods, end of fire | `sb-asc`: burnt cell count and every message (cells, period, rate) of all 113 fires | **Done** |
+| 3 | Outputs and command line: grids, messages, intensity, flame length | `sb-asc` output files | Next |
 | 4 | Slope (elevation raster) | New targets from the C++ build | Planned |
 | 5 | Kitral fuel model; Portugal as another coefficient table | `test_kitral.cpp` values; `kitral-asc`, `portugal-asc` targets | Planned |
 | 6 | Random ignitions, many simulations, burn probability | Logged ignition cells (needs boost's mt19937 sampling) | Planned |
@@ -67,10 +79,13 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 | Rate of spread towards the 8 neighbours | Done |
 | Surface intensity | Done (S&B) |
 | Flame length | Computed (S&B), not yet checked against outputs |
-| Grid propagation, messages, weather periods | Planned (layer 2) |
-| Fixed ignition (`Ignitions.csv`) | Planned (layer 2) |
-| ASCII rasters (`.asc`) | Planned (layer 2) |
+| Grid propagation and messages | Done |
+| Changing weather (several weather rows) | Done, but only checked with constant weather so far. `portugal-asc` and `fbp-asc` have changing weather. |
+| Fire from a given ignition cell | Done |
+| Reading `Ignitions.csv` | Planned (layer 3) |
+| Fuel raster in ASCII format (`fuels.asc`) and lookup table | Done |
 | GeoTIFF rasters (`.tif`) | Planned |
+| Weather file (`Weather.csv`, wind columns) | Done |
 | Output files | Planned (layer 3) |
 | Slope | Planned (layer 4) |
 | Random ignition, ignition probability map | Planned (layer 6) |
@@ -100,13 +115,20 @@ Reproduced on purpose:
 
 - The Scott & Burgan length-to-breadth ratio is Anderson's formula raised to the power 0.45 (uncited).
 - Intensity is rounded up to two decimals. The rate of spread written in messages is too.
+- Wind direction is truncated to a whole degree when read.
+- Cell size is truncated to a whole metre when read.
+- The first weather row lasts one fire period longer than the others (61 minutes by
+  default): C2F-W moves to the next row only once the elapsed time is strictly past it.
+- A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
+  a message every period. The cell sending them does not burn out while that happens.
+- Fire periods are counted from 0 at ignition, and cells spread in that same period 0.
+  A fire that needs 4 minutes to reach a neighbour sends its message in period 3.
 
 Known issues, not reached yet:
 
 - The slope effect looks about 100 times too weak: slope is used as a fraction where the
   coefficients look like they expect a percentage. Kitral has the same issue.
 - The S&B and Portugal slope effect uses the cell side for diagonal neighbours too.
-- Wind direction is truncated to a whole degree when read.
 - Kitral: intensity and flame length of the cells reached by fire are always 0.
 - FBP: the ellipse is built differently than in the other models, so the head fire can
   spread close to twice the computed head rate. Flame length is never computed.
