@@ -1,0 +1,1618 @@
+
+------ Command line values ------
+InFolder: model/sb-asc 
+OutFolder: test_results/sb-asc 
+OutMessages: true 
+OutIntensity: true 
+Ignition Points Log: true 
+OutputGrids: true 
+TotalSims: 113 
+Simulator: S 
+scenario: 1 
+seed: 123 
+
+------ Reading input data ------
+
+Using .asc
+No elevation.asc file, filling with NaN
+No saz.asc file, filling with NaN
+No slope.asc file, filling with NaN
+No cur.asc file, filling with NaN
+No cbd.asc file, filling with NaN
+No cbh.asc file, filling with NaN
+No ccf.asc file, filling with NaN
+No probabilityMap.asc file, filling with NaN
+No fmc.asc file, filling with NaN
+No hm.asc file, filling with NaN
+Generated data file
+
+------------------Forest Data ----------------------
+
+model/sb-asc/fuels.asc
+Forest DataFrame from instance model/sb-asc/Data.csv
+Number of cells: 49
+
+-------Running simulations-------
+Serial version execution
+
+Simulation 1 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 49
+	max time periods: 300
+
+Simulation 1 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 2 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 2 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 3 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 27
+	max time periods: 300
+
+Simulation 3 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 10      20.41%
+	Burnt                     33      67.35%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 4 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 17
+	max time periods: 300
+
+Simulation 4 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 5 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 28
+	max time periods: 300
+
+Simulation 5 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 11      22.45%
+	Burnt                     32      65.31%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 6 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 6 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 7 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 1
+	max time periods: 300
+
+Simulation 7 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 8 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 48
+	max time periods: 300
+
+Simulation 8 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 9 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 9 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 10 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 7
+	max time periods: 300
+
+Simulation 10 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 11 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 45
+	max time periods: 300
+
+Simulation 11 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 12 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 12 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 13 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 14
+	max time periods: 300
+
+Simulation 13 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 14 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 47
+	max time periods: 300
+
+Simulation 14 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 15 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 3
+	max time periods: 300
+
+Simulation 15 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 16 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 14
+	max time periods: 300
+
+Simulation 16 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 17 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 44
+	max time periods: 300
+
+Simulation 17 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 18 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 28
+	max time periods: 300
+
+Simulation 18 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 11      22.45%
+	Burnt                     32      65.31%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 19 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 28
+	max time periods: 300
+
+Simulation 19 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 11      22.45%
+	Burnt                     32      65.31%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 20 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 18
+	max time periods: 300
+
+Simulation 20 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 21 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 47
+	max time periods: 300
+
+Simulation 21 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 22 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 22 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 23 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 23 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 24 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 22
+	max time periods: 300
+
+Simulation 24 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 25 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 43
+	max time periods: 300
+
+Simulation 25 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 26 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 21
+	max time periods: 300
+
+Simulation 26 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 10      20.41%
+	Burnt                     33      67.35%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 27 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 17
+	max time periods: 300
+
+Simulation 27 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 28 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 27
+	max time periods: 300
+
+Simulation 28 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 10      20.41%
+	Burnt                     33      67.35%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 29 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 10
+	max time periods: 300
+
+Simulation 29 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 30 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 25
+	max time periods: 300
+
+Simulation 30 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 31 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 28
+	max time periods: 300
+
+Simulation 31 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 11      22.45%
+	Burnt                     32      65.31%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 32 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 20
+	max time periods: 300
+
+Simulation 32 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 33 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 23
+	max time periods: 300
+
+Simulation 33 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 34 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 49
+	max time periods: 300
+
+Simulation 34 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 35 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 14
+	max time periods: 300
+
+Simulation 35 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 36 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 29
+	max time periods: 300
+
+Simulation 36 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 37 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 20
+	max time periods: 300
+
+Simulation 37 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 38 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 23
+	max time periods: 300
+
+Simulation 38 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 39 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 11
+	max time periods: 300
+
+Simulation 39 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 40 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 15
+	max time periods: 300
+
+Simulation 40 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 41 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 8
+	max time periods: 300
+
+Simulation 41 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 42 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 8
+	max time periods: 300
+
+Simulation 42 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 43 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 23
+	max time periods: 300
+
+Simulation 43 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 44 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 19
+	max time periods: 300
+
+Simulation 44 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 45 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 6
+	max time periods: 300
+
+Simulation 45 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 46 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 19
+	max time periods: 300
+
+Simulation 46 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 47 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 11
+	max time periods: 300
+
+Simulation 47 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 48 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 48 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 49 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 18
+	max time periods: 300
+
+Simulation 49 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 50 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 31
+	max time periods: 300
+
+Simulation 50 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 51 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 7
+	max time periods: 300
+
+Simulation 51 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 52 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 47
+	max time periods: 300
+
+Simulation 52 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 53 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 53 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 54 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 32
+	max time periods: 300
+
+Simulation 54 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 55 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 18
+	max time periods: 300
+
+Simulation 55 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 56 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 45
+	max time periods: 300
+
+Simulation 56 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 57 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 42
+	max time periods: 300
+
+Simulation 57 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 58 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 14
+	max time periods: 300
+
+Simulation 58 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 59 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 48
+	max time periods: 300
+
+Simulation 59 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 60 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 19
+	max time periods: 300
+
+Simulation 60 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 61 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 13
+	max time periods: 300
+
+Simulation 61 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 62 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 4
+	max time periods: 300
+
+Simulation 62 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 63 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 28
+	max time periods: 300
+
+Simulation 63 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 11      22.45%
+	Burnt                     32      65.31%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 64 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 64 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 65 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 5
+	max time periods: 300
+
+Simulation 65 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 66 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 2
+	max time periods: 300
+
+Simulation 66 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 67 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 31
+	max time periods: 300
+
+Simulation 67 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 68 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 48
+	max time periods: 300
+
+Simulation 68 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 69 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 25
+	max time periods: 300
+
+Simulation 69 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 70 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 9
+	max time periods: 300
+
+Simulation 70 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 71 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 71 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 72 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 12
+	max time periods: 300
+
+Simulation 72 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 73 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 73 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 74 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 45
+	max time periods: 300
+
+Simulation 74 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 75 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 14
+	max time periods: 300
+
+Simulation 75 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 76 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 20
+	max time periods: 300
+
+Simulation 76 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 77 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 47
+	max time periods: 300
+
+Simulation 77 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 78 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 48
+	max time periods: 300
+
+Simulation 78 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 79 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 49
+	max time periods: 300
+
+Simulation 79 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 80 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 7
+	max time periods: 300
+
+Simulation 80 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 81 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 43
+	max time periods: 300
+
+Simulation 81 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 82 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 22
+	max time periods: 300
+
+Simulation 82 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 83 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 42
+	max time periods: 300
+
+Simulation 83 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 84 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 23
+	max time periods: 300
+
+Simulation 84 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 85 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 85 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 86 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 10
+	max time periods: 300
+
+Simulation 86 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 87 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 30
+	max time periods: 300
+
+Simulation 87 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 88 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 46
+	max time periods: 300
+
+Simulation 88 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 89 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 29
+	max time periods: 300
+
+Simulation 89 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 90 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 9
+	max time periods: 300
+
+Simulation 90 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 91 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 25
+	max time periods: 300
+
+Simulation 91 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 92 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 6
+	max time periods: 300
+
+Simulation 92 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 93 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 27
+	max time periods: 300
+
+Simulation 93 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 10      20.41%
+	Burnt                     33      67.35%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 94 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 8
+	max time periods: 300
+
+Simulation 94 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 95 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 10
+	max time periods: 300
+
+Simulation 95 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 96 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 13
+	max time periods: 300
+
+Simulation 96 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 97 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 18
+	max time periods: 300
+
+Simulation 97 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 98 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 45
+	max time periods: 300
+
+Simulation 98 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 99 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 20
+	max time periods: 300
+
+Simulation 99 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 100 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 15
+	max time periods: 300
+
+Simulation 100 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 101 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 27
+	max time periods: 300
+
+Simulation 101 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 10      20.41%
+	Burnt                     33      67.35%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 102 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 102 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 103 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 41
+	max time periods: 300
+
+Simulation 103 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 104 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 2
+	max time periods: 300
+
+Simulation 104 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 105 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 3
+	max time periods: 300
+
+Simulation 105 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 106 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 24
+	max time periods: 300
+
+Simulation 106 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 107 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 10
+	max time periods: 300
+
+Simulation 107 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 108 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 23
+	max time periods: 300
+
+Simulation 108 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 109 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 39
+	max time periods: 300
+
+Simulation 109 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 110 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 1
+	max time periods: 300
+
+Simulation 110 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 111 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 16
+	max time periods: 300
+
+Simulation 111 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 112 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 10
+	max time periods: 300
+
+Simulation 112 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                  0       0.00%
+	Burnt                     43      87.76%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
+
+Simulation 113 Start:
+	weather file: model/sb-asc/Weather.csv
+	ignition cell: 26
+	max time periods: 300
+
+Simulation 113 Results:
+	Cell Status            Count     Percent
+	----------------------------------------
+	Available                 15      30.61%
+	Burnt                     28      57.14%
+	Non-Burnable               6      12.24%
+	Firebreak                  0       0.00%
+	Total                     49     100.00%
