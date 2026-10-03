@@ -28,12 +28,13 @@ impl FireEllipse {
 
     /// Rate of spread towards `direction`, in m/min.
     pub fn spread_rate_towards(&self, direction: f64) -> f64 {
-        let a = f64::from(self.semi_major);
-        let b = f64::from(self.semi_minor);
-        let eccentricity = (a * a - b * b).sqrt() / a;
+        let semi_major = f64::from(self.semi_major);
+        let semi_minor = f64::from(self.semi_minor);
+        let eccentricity = (semi_major * semi_major - semi_minor * semi_minor).sqrt() / semi_major;
         let angle_from_head = (direction - self.heading).to_radians();
         // Distance from the rear focus to the edge of the ellipse, in polar form.
-        a * (1.0 - eccentricity * eccentricity) / (1.0 - eccentricity * angle_from_head.cos())
+        semi_major * (1.0 - eccentricity * eccentricity)
+            / (1.0 - eccentricity * angle_from_head.cos())
     }
 }
 
