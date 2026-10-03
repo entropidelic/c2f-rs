@@ -20,7 +20,8 @@ wind from the south for 5 hours.
 Output formats:
 
 - `Messages/MessagesFileNNN.csv`: one line per message, `source cell, target cell, period, rate of spread`.
-  Cells are numbered from 1, row by row, starting at the top-left corner.
+  Cells are numbered from 1, row by row, starting at the top-left corner. Period *p* means
+  the fire arrived after *p*+1 minutes (see "Differences from C2F-W" in the roadmap).
 - `SurfaceIntensity/SurfaceIntensityNNN.asc`: intensity of every cell in kW/m, 0 if it did not burn.
 - `ignition_and_weather_log.csv`: ignition cell and weather file of every simulation.
 - `log.txt`: C2F-W's console output, with a results table (burnt cell count, ...) for every simulation.

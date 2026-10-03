@@ -13,8 +13,8 @@ const DATA: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/sb-asc");
 const SCENARIO: u8 = 1;
 const SIMULATIONS: usize = 113;
 
-/// A message as (from, to, period, rate), with cells numbered from 0 and the rate in
-/// hundredths of m/min. C2F-W writes the rate rounded up to two decimals.
+/// A message as (from, to, arrival minute, rate), with cells numbered from 0 and the
+/// rate in hundredths of m/min. C2F-W writes the rate rounded up to two decimals.
 type MessageKey = (usize, usize, u32, i64);
 
 fn read_landscape() -> Landscape {
@@ -49,6 +49,9 @@ fn read_burnt_counts() -> Vec<usize> {
 }
 
 /// Messages of a simulation, sorted. C2F-W writes them in hash map order.
+///
+/// C2F-W writes fire period numbers instead of times. Its period 0 already spreads the
+/// fire for one minute, so a fire that arrives after 4 minutes is written as period 3.
 fn read_expected_messages(simulation: usize) -> Vec<MessageKey> {
     let path = format!("{DATA}/expected/Messages/MessagesFile{simulation:03}.csv");
     let mut messages: Vec<MessageKey> = fs::read_to_string(path)
@@ -60,7 +63,13 @@ fn read_expected_messages(simulation: usize) -> Vec<MessageKey> {
             let to: usize = fields[1].parse().unwrap();
             let period: u32 = fields[2].parse().unwrap();
             let rate: f64 = fields[3].parse().unwrap();
-            (from - 1, to - 1, period, (rate * 100.0).round() as i64)
+            let arrival_minute = period + 1;
+            (
+                from - 1,
+                to - 1,
+                arrival_minute,
+                (rate * 100.0).round() as i64,
+            )
         })
         .collect();
     messages.sort();
@@ -115,8 +124,9 @@ fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
             .messages
             .iter()
             .map(|message| {
+                let arrival_minute = message.arrival_time.round() as u32;
                 let rate_in_hundredths = (f64::from(message.rate) * 100.0).ceil() as i64;
-                (message.from, message.to, message.period, rate_in_hundredths)
+                (message.from, message.to, arrival_minute, rate_in_hundredths)
             })
             .collect();
         messages.sort();

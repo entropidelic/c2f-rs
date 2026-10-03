@@ -80,7 +80,7 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 | Surface intensity | Done (S&B) |
 | Flame length | Computed (S&B), not yet checked against outputs |
 | Grid propagation and messages | Done |
-| Changing weather (several weather rows) | Done, but only checked with constant weather so far. `portugal-asc` and `fbp-asc` have changing weather. |
+| Changing weather (several weather rows) | Done, but only checked with constant weather so far. `portugal-asc` and `fbp-asc` have changing weather. C2F-W changes the weather one period late (see Differences below). |
 | Fire from a given ignition cell | Done |
 | Reading `Ignitions.csv` | Planned (layer 3) |
 | Fuel raster in ASCII format (`fuels.asc`) and lookup table | Done |
@@ -130,6 +130,34 @@ weather files, and 0.02% of cell size in Portezuelo. But it grows as cells get s
 
 Validation is not affected: the `sb-asc` inputs are whole numbers.
 
+### Time starts at ignition, and weather changes on the hour
+
+In c2f-rs, time starts at 0 when the fire ignites, and each fire period covers one step
+of time (a minute by default). The weather row of hour *k* applies from minute 60·*k* to
+minute 60·(*k*+1). A message records the minute when the fire reached the cell.
+
+In C2F-W the clock is one step behind the fire:
+
+- The ignition period (period 0) already spreads the fire, but does not count as time
+  passing. A fire that arrives after 4 minutes of spread is written as "period 3".
+- The weather changes one period late: the first weather row lasts 61 minutes, and every
+  later change comes a minute after it should.
+
+This goes back to the first Python prototype of Cell2Fire (2019). Its code treats period 0
+as the ignition and period 1 as the first period of spread, and the weather update is
+written for that. But the code also spreads during period 0, which adds an extra step.
+The original C++ has the fix right after ignition, commented out:
+`//this->fire_period[year - 1] += 1;   // DEBUGGING!!!`. Back then the default fire period
+was 60 minutes, so the weather was a whole hour late. C2F-W changed the default to
+1 minute, which made the error small and easy to miss.
+
+There is no computational reason for this behaviour, so we use plain time instead.
+
+Validation: tests convert C2F-W's period *p* into minute *p*+1. The `sb-asc` weather never
+changes, so the weather timing makes no difference there. For reference data with changing
+weather, the test will expand the weather into one row per minute following C2F-W's
+timing, and run c2f-rs with a 1-minute weather period. The workaround stays in the test.
+
 ## C2F-W quirks still reproduced
 
 These are reproduced for now. Each one will either become a difference above, or stay
@@ -137,12 +165,8 @@ because it is part of the model.
 
 - The Scott & Burgan length-to-breadth ratio is Anderson's formula raised to the power 0.45 (uncited).
 - Intensity is rounded up to two decimals. The rate of spread written in messages is too.
-- The first weather row lasts one fire period longer than the others (61 minutes by
-  default): C2F-W moves to the next row only once the elapsed time is strictly past it.
 - A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
   a message every period. The cell sending them does not burn out while that happens.
-- Fire periods are counted from 0 at ignition, and cells spread in that same period 0.
-  A fire that needs 4 minutes to reach a neighbour sends its message in period 3.
 
 Known issues, not reached yet:
 

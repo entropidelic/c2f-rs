@@ -39,8 +39,8 @@ impl Default for Settings {
 pub struct Message {
     pub from: usize,
     pub to: usize,
-    /// Fire period when the fire reached `to`, counting from 0 at ignition.
-    pub period: u32,
+    /// Minutes after ignition when the fire reached the centre of `to`.
+    pub arrival_time: f32,
     /// Rate of spread from `from` towards `to`, in m/min.
     pub rate: f32,
 }
@@ -91,7 +91,9 @@ pub fn simulate(
     let period_count = (settings.weather_period_minutes / settings.fire_period_minutes
         * weather.len() as f32) as u32;
     for period in 0..period_count {
-        let current_weather = &weather[weather_row(period, settings)];
+        let start_time = period as f32 * settings.fire_period_minutes;
+        let end_time = start_time + settings.fire_period_minutes;
+        let current_weather = &weather[(start_time / settings.weather_period_minutes) as usize];
         let first_new_message = fire.messages.len();
 
         burning.retain_mut(|burning_cell| {
@@ -102,7 +104,7 @@ pub fn simulate(
                 &available,
                 current_weather,
                 settings,
-                period,
+                end_time,
                 &mut fire.messages,
             )
         });
@@ -139,9 +141,9 @@ pub fn simulate(
     Ok(fire)
 }
 
-/// Advances the fire of a burning cell towards its available neighbours, and records a
-/// message for every neighbour whose centre has been reached. A neighbour keeps getting
-/// messages every period until it catches fire.
+/// Advances the fire of a burning cell for one fire period, towards its available
+/// neighbours, and records a message for every neighbour whose centre has been reached
+/// by `end_time`. A neighbour keeps getting messages every period until it catches fire.
 ///
 /// Returns false when the cell has burnt out.
 #[allow(clippy::too_many_arguments)]
@@ -152,7 +154,7 @@ fn spread(
     available: &[bool],
     weather: &Weather,
     settings: &Settings,
-    period: u32,
+    end_time: f32,
     messages: &mut Vec<Message>,
 ) -> bool {
     let fuel = fuels[burning_cell.cell].expect("only cells with fuel burn");
@@ -183,7 +185,7 @@ fn spread(
             messages.push(Message {
                 from: burning_cell.cell,
                 to: neighbour.cell,
-                period,
+                arrival_time: end_time,
                 rate,
             });
         }
@@ -194,20 +196,6 @@ fn spread(
 
 fn surface_fire(fuel: &FuelCoefficients, weather: &Weather) -> SurfaceFire {
     scott_burgan::surface_fire(fuel, weather.wind_speed)
-}
-
-/// Which weather row applies during a fire period.
-///
-/// C2F-W moves to the next row only once the elapsed time is strictly past the end of
-/// the current one, so the first row lasts one fire period longer than the others.
-fn weather_row(period: u32, settings: &Settings) -> usize {
-    let elapsed_weather_periods =
-        period as f32 * settings.fire_period_minutes / settings.weather_period_minutes;
-    if elapsed_weather_periods <= 1.0 {
-        0
-    } else {
-        elapsed_weather_periods.ceil() as usize - 1
-    }
 }
 
 /// The fuel model coefficients of every cell, or `None` for cells without fuel.
@@ -227,19 +215,4 @@ fn fuel_coefficients(
                 )),
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn the_first_weather_row_lasts_one_extra_period() {
-        let settings = Settings::default();
-        assert_eq!(weather_row(0, &settings), 0);
-        assert_eq!(weather_row(60, &settings), 0);
-        assert_eq!(weather_row(61, &settings), 1);
-        assert_eq!(weather_row(120, &settings), 1);
-        assert_eq!(weather_row(121, &settings), 2);
-    }
 }
