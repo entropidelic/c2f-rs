@@ -35,12 +35,9 @@ pub fn read_weather(path: &Path) -> Result<Vec<Weather>, String> {
     let mut rows = Vec::new();
     for line in lines.filter(|line| !line.trim().is_empty()) {
         let fields: Vec<&str> = line.split(',').map(str::trim).collect();
-        let wind_speed: f32 = parse_field(&fields, wind_speed_column, path)?;
-        let wind_direction: f64 = parse_field(&fields, wind_direction_column, path)?;
         rows.push(Weather {
-            wind_speed,
-            // C2F-W keeps only whole degrees.
-            wind_direction: wind_direction.trunc(),
+            wind_speed: parse_field(&fields, wind_speed_column, path)?,
+            wind_direction: parse_field(&fields, wind_direction_column, path)?,
         });
     }
     Ok(rows)

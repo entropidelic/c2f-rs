@@ -105,18 +105,38 @@ These exist in C2F-W but are unused, broken, or not needed:
 - Writing `Data.csv` into the input folder.
 - `--HFI-Threshold`, `--CROS-Threshold`, `--CROSAct-Threshold`: parsed but never used.
 
-## C2F-W quirks
+## Differences from C2F-W
 
-We reproduce C2F-W's behaviour first, so that its outputs stay usable as ground truth.
-Quirks that look like bugs are listed here, so we can fix each one later on purpose,
-with its own test.
+C2F-W is our reference for the model: the fuel model equations, the elliptical spread and
+the message-passing propagation. It is not a reference for implementation details. We use
+its outputs to validate the model, but we do not copy its artefacts. Each deliberate
+difference is listed here, with the reason.
 
-Reproduced on purpose:
+### Wind direction and cell size keep their decimals
+
+C2F-W reads both with `std::stoi`, which drops the decimals: a wind from 157.9° becomes
+157°, and a 100.02265625 m cell becomes 100 m.
+
+This comes from the original Cell2Fire, which was built around the Canadian FBP program
+(`FBP5.0.h`, B.M. Wotton, 1992). There, wind azimuth, slope, aspect and elevation are whole
+numbers, which suits Canadian fire weather records and the FBP tables. Cell2Fire read them
+as integers, and its cell size too, since its landscapes were 100 m grids. When C2F-W added
+Scott & Burgan and Kitral, wind direction became a decimal number, but it was still parsed
+as an integer.
+
+The effect is small on the bundled data: under 1° of wind direction in the Villarrica
+weather files, and 0.02% of cell size in Portezuelo. But it grows as cells get smaller: a
+12.5 m cell becomes 12 m (4% faster spread), and a cell under 1 m becomes 0 m.
+
+Validation is not affected: the `sb-asc` inputs are whole numbers.
+
+## C2F-W quirks still reproduced
+
+These are reproduced for now. Each one will either become a difference above, or stay
+because it is part of the model.
 
 - The Scott & Burgan length-to-breadth ratio is Anderson's formula raised to the power 0.45 (uncited).
 - Intensity is rounded up to two decimals. The rate of spread written in messages is too.
-- Wind direction is truncated to a whole degree when read.
-- Cell size is truncated to a whole metre when read.
 - The first weather row lasts one fire period longer than the others (61 minutes by
   default): C2F-W moves to the next row only once the elapsed time is strictly past it.
 - A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
@@ -135,3 +155,5 @@ Known issues, not reached yet:
 - Portugal: the crown fire rate adds `CBDFactor * CBDFactor` instead of `CBDFactor * cbd`.
 - Off-by-one index when storing the surface fraction burnt (FBP).
 - Crown fire state (`activeCrown`) is a single flag for the whole simulation, not per cell.
+- Slope, aspect and elevation are also read as whole numbers in some C2F-W code paths
+  (same origin as above). We will keep their decimals when we add slope.

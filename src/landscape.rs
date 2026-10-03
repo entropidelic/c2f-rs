@@ -86,8 +86,7 @@ impl Landscape {
         Ok(Landscape {
             rows,
             columns,
-            // C2F-W keeps only whole metres.
-            cell_size: cell_size.trunc(),
+            cell_size,
             fuels,
         })
     }
