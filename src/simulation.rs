@@ -34,13 +34,14 @@ impl Default for Settings {
     }
 }
 
-/// The fire from one cell reached the centre of a neighbour.
+/// The fire spread from one cell to a neighbour: it reached the neighbour's centre and
+/// set it on fire.
 #[derive(Debug, Clone, Copy)]
 pub struct Message {
     pub from: usize,
     pub to: usize,
-    /// Minutes after ignition when the fire reached the centre of `to`.
-    pub arrival_time: f32,
+    /// Minutes after ignition when `to` caught fire.
+    pub time: f32,
     /// Rate of spread from `from` towards `to`, in m/min.
     pub rate: f32,
 }
@@ -94,8 +95,8 @@ pub fn simulate(
         let start_time = period as f32 * settings.fire_period_minutes;
         let end_time = start_time + settings.fire_period_minutes;
         let current_weather = &weather[(start_time / settings.weather_period_minutes) as usize];
-        let first_new_message = fire.messages.len();
 
+        let mut arrivals = Vec::new();
         burning.retain_mut(|burning_cell| {
             spread(
                 burning_cell,
@@ -105,23 +106,20 @@ pub fn simulate(
                 current_weather,
                 settings,
                 end_time,
-                &mut fire.messages,
+                &mut arrivals,
             )
         });
 
-        let mut reached: Vec<usize> = fire.messages[first_new_message..]
-            .iter()
-            .map(|message| message.to)
-            .collect();
-        let fire_died_out = reached.is_empty() && burning.is_empty();
+        let fire_died_out = arrivals.is_empty() && burning.is_empty();
         if fire_died_out {
             break;
         }
+
+        let mut reached: Vec<usize> = arrivals.iter().map(|arrival| arrival.to).collect();
         reached.sort_unstable();
         reached.dedup();
-
         for cell in reached {
-            let fuel = fuels[cell].expect("messages only go to cells with fuel");
+            let fuel = fuels[cell].expect("the fire only reaches cells with fuel");
             if surface_fire(fuel, current_weather).head_ros > settings.ros_threshold {
                 available[cell] = false;
                 available_count -= 1;
@@ -133,6 +131,13 @@ pub fn simulate(
             }
         }
 
+        // Only arrivals that set a cell on fire become messages. A cell that could not
+        // ignite stays available, and will be reached again next period.
+        let ignitions = arrivals
+            .into_iter()
+            .filter(|arrival| !available[arrival.to]);
+        fire.messages.extend(ignitions);
+
         if available_count == 0 {
             break;
         }
@@ -142,8 +147,9 @@ pub fn simulate(
 }
 
 /// Advances the fire of a burning cell for one fire period, towards its available
-/// neighbours, and records a message for every neighbour whose centre has been reached
-/// by `end_time`. A neighbour keeps getting messages every period until it catches fire.
+/// neighbours, and records an arrival for every neighbour whose centre has been reached
+/// by `end_time`. A neighbour that could not ignite is reached again every period, until
+/// it catches fire.
 ///
 /// Returns false when the cell has burnt out.
 #[allow(clippy::too_many_arguments)]
@@ -155,7 +161,7 @@ fn spread(
     weather: &Weather,
     settings: &Settings,
     end_time: f32,
-    messages: &mut Vec<Message>,
+    arrivals: &mut Vec<Message>,
 ) -> bool {
     let fuel = fuels[burning_cell.cell].expect("only cells with fuel burn");
     let fire = surface_fire(fuel, weather);
@@ -182,10 +188,10 @@ fn spread(
         let progress = &mut burning_cell.progress[neighbour.position];
         *progress += f64::from(rate * settings.fire_period_minutes);
         if *progress >= neighbour.distance {
-            messages.push(Message {
+            arrivals.push(Message {
                 from: burning_cell.cell,
                 to: neighbour.cell,
-                arrival_time: end_time,
+                time: end_time,
                 rate,
             });
         }
@@ -215,4 +221,45 @@ fn fuel_coefficients(
                 )),
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// GR4 grass: spreads fast even without wind.
+    const GRASS: u16 = 104;
+    /// TL1 timber litter: too slow to ignite without wind in the driest scenario.
+    const LITTER: u16 = 181;
+
+    #[test]
+    fn a_cell_that_cannot_ignite_yet_gets_a_message_only_when_it_catches_fire() {
+        let landscape = Landscape {
+            rows: 1,
+            columns: 2,
+            cell_size: 100.0,
+            fuels: vec![Some(GRASS), Some(LITTER)],
+        };
+        let calm = Weather {
+            wind_speed: 0.0,
+            wind_direction: 270.0,
+        };
+        let windy = Weather {
+            wind_speed: 20.0,
+            wind_direction: 270.0,
+        };
+        let settings = Settings {
+            moisture_scenario: 1,
+            ..Settings::default()
+        };
+
+        let fire = simulate(&landscape, &[calm, windy], 0, &settings).unwrap();
+
+        // The grass fire reaches the litter within minutes, but the litter only ignites
+        // when the wind rises, in the first minute of the second hour.
+        assert_eq!(fire.burnt_cells, vec![0, 1]);
+        assert_eq!(fire.messages.len(), 1);
+        assert_eq!(fire.messages[0].to, 1);
+        assert_eq!(fire.messages[0].time, 61.0);
+    }
 }

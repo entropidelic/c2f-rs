@@ -124,7 +124,7 @@ fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
             .messages
             .iter()
             .map(|message| {
-                let arrival_minute = message.arrival_time.round() as u32;
+                let arrival_minute = message.time.round() as u32;
                 let rate_in_hundredths = (f64::from(message.rate) * 100.0).ceil() as i64;
                 (message.from, message.to, arrival_minute, rate_in_hundredths)
             })

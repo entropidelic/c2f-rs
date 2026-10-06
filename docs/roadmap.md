@@ -16,7 +16,8 @@ The landscape is a grid of square cells. When a cell burns:
 3. Every time step (1 minute by default) the fire advances towards each neighbour.
    When it reaches a neighbour's centre, that neighbour receives a **message**.
 4. A cell that gets a message ignites if its own head rate of spread is above a
-   threshold. A burning cell with nowhere left to spread burns out.
+   threshold. Otherwise it stays unburnt, and gets a message again next time step.
+   A burning cell with nowhere left to spread burns out.
 5. The weather changes every 60 minutes. The fire stops when no cell is burning or
    the weather rows run out.
 
@@ -52,7 +53,7 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 | # | Layer | Validated against | Status |
 |---|-------|-------------------|--------|
 | 1 | Scott & Burgan surface fire for one cell, fire ellipse, wind direction | `sb-asc`: 4739 cell intensities | **Done** |
-| 2 | Grid propagation: read fuels/lookup/weather, time steps, messages, ignition from a fixed cell, weather periods, end of fire | `sb-asc`: burnt cell count and every message (cells, period, rate) of all 113 fires | **Done** |
+| 2 | Grid propagation: read fuels/lookup/weather, time steps, messages, ignition from a fixed cell, weather periods, end of fire | `sb-asc`: burnt cell count and every message (cells, time, rate) of all 113 fires | **Done** |
 | 3 | Outputs and command line: grids, messages, intensity, flame length | `sb-asc` output files | Next |
 | 4 | Slope (elevation raster) | New targets from the C++ build | Planned |
 | 5 | Kitral fuel model; Portugal as another coefficient table | `test_kitral.cpp` values; `kitral-asc`, `portugal-asc` targets | Planned |
@@ -134,7 +135,7 @@ Validation is not affected: the `sb-asc` inputs are whole numbers.
 
 In c2f-rs, time starts at 0 when the fire ignites, and each fire period covers one step
 of time (a minute by default). The weather row of hour *k* applies from minute 60·*k* to
-minute 60·(*k*+1). A message records the minute when the fire reached the cell.
+minute 60·(*k*+1). A message records the minute when the cell caught fire.
 
 In C2F-W the clock is one step behind the fire:
 
@@ -170,6 +171,34 @@ c2f-rs keeps full precision. Rounding, if any, belongs where outputs are written
 
 Validation: the tests allow for C2F-W's rounding (up to 0.01).
 
+### A message means the fire spread
+
+When the fire reaches the centre of a neighbour that cannot ignite (its fire would be too
+weak, for example wet fuel or no wind), the neighbour stays unburnt and the burning cell
+keeps pushing at it every period, in case conditions change. Both C2F-W and c2f-rs do this.
+
+C2F-W also writes a message for every one of those attempts, so a single neighbour can
+get hundreds of identical lines. c2f-rs writes a message only when the fire actually sets
+the neighbour on fire, at that time.
+
+We checked that this repetition was not intended:
+
+- The retrying is intended, and kept. The repeated lines are not: the 2019 Python
+  prototype stored messages in a dictionary keyed by (from cell, to cell), so a repeated
+  attempt overwrote the previous one. The duplicates appeared when the C++ translation
+  stored them in a plain list.
+- Nothing in C2F-W reads the messages back. They only go to the output file.
+- The tools that read that file assume every message is a fire that spread. The fire2a
+  downstream protection value builds a "who burnt whom" graph from it, and the hands-on
+  notebook draws arrival time maps from it. Both show a cell that never caught fire as
+  burnt.
+
+C2F-W also writes intensity, flame length and rate of spread values in its output grids
+for those reached but unburnt cells. Our outputs (layer 3) will not.
+
+Validation: in `sb-asc` every cell reached catches fire straight away, so the reference
+messages are unchanged. A unit test covers a cell that only ignites once the wind rises.
+
 ## C2F-W quirks still reproduced
 
 These are reproduced for now. Each one will either become a difference above, or stay
@@ -183,8 +212,6 @@ because it is part of the model.
   ground, while Anderson's formula expects the weaker wind at flame height. It is part of
   how this fire model behaves, so we keep it. A later option is to scale the wind down to
   flame height explicitly and use Anderson's formula unchanged.
-- A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
-  a message every period. The cell sending them does not burn out while that happens.
 
 Known issues, not reached yet:
 
