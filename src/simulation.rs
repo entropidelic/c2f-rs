@@ -46,11 +46,23 @@ pub struct Message {
     pub rate: f32,
 }
 
+/// A cell that caught fire, with its fire behaviour at that moment.
+#[derive(Debug, Clone, Copy)]
+pub struct BurntCell {
+    pub cell: usize,
+    /// Minutes after ignition when the cell caught fire.
+    pub time: f32,
+    /// Byram fireline intensity, in kW/m.
+    pub intensity: f32,
+    /// Flame length, in m.
+    pub flame_length: f32,
+}
+
 #[derive(Debug, Default)]
 pub struct Fire {
     pub messages: Vec<Message>,
     /// Every cell that caught fire, starting with the ignition cell.
-    pub burnt_cells: Vec<usize>,
+    pub burnt_cells: Vec<BurntCell>,
 }
 
 struct BurningCell {
@@ -68,10 +80,20 @@ pub fn simulate(
     settings: &Settings,
 ) -> Result<Fire, String> {
     let fuels = fuel_coefficients(landscape, settings.moisture_scenario)?;
-    let mut fire = Fire::default();
-    if fuels[ignition].is_none() {
-        return Ok(fire);
+    if ignition >= fuels.len() {
+        return Err(format!(
+            "the ignition cell is outside the landscape, which has {} cells",
+            fuels.len()
+        ));
     }
+    if weather.is_empty() {
+        return Err("the weather has no rows".to_string());
+    }
+
+    let mut fire = Fire::default();
+    let Some(ignition_fuel) = fuels[ignition] else {
+        return Ok(fire);
+    };
 
     // Cells with fuel that have not caught fire yet.
     let mut available: Vec<bool> = fuels.iter().map(|fuel| fuel.is_some()).collect();
@@ -82,7 +104,13 @@ pub fn simulate(
 
     available[ignition] = false;
     available_count -= 1;
-    fire.burnt_cells.push(ignition);
+    let ignition_fire = surface_fire(ignition_fuel, &weather[0]);
+    fire.burnt_cells.push(BurntCell {
+        cell: ignition,
+        time: 0.0,
+        intensity: ignition_fire.intensity,
+        flame_length: ignition_fire.flame_length,
+    });
     let mut burning = vec![BurningCell {
         cell: ignition,
         progress: [0.0; 8],
@@ -120,10 +148,16 @@ pub fn simulate(
         reached.dedup();
         for cell in reached {
             let fuel = fuels[cell].expect("the fire only reaches cells with fuel");
-            if surface_fire(fuel, current_weather).head_ros > settings.ros_threshold {
+            let cell_fire = surface_fire(fuel, current_weather);
+            if cell_fire.head_ros > settings.ros_threshold {
                 available[cell] = false;
                 available_count -= 1;
-                fire.burnt_cells.push(cell);
+                fire.burnt_cells.push(BurntCell {
+                    cell,
+                    time: end_time,
+                    intensity: cell_fire.intensity,
+                    flame_length: cell_fire.flame_length,
+                });
                 burning.push(BurningCell {
                     cell,
                     progress: [0.0; 8],
@@ -238,6 +272,8 @@ mod tests {
             rows: 1,
             columns: 2,
             cell_size: 100.0,
+            lower_left_x: 0.0,
+            lower_left_y: 0.0,
             fuels: vec![Some(GRASS), Some(LITTER)],
         };
         let calm = Weather {
@@ -257,7 +293,8 @@ mod tests {
 
         // The grass fire reaches the litter within minutes, but the litter only ignites
         // when the wind rises, in the first minute of the second hour.
-        assert_eq!(fire.burnt_cells, vec![0, 1]);
+        let burnt: Vec<usize> = fire.burnt_cells.iter().map(|burnt| burnt.cell).collect();
+        assert_eq!(burnt, vec![0, 1]);
         assert_eq!(fire.messages.len(), 1);
         assert_eq!(fire.messages[0].to, 1);
         assert_eq!(fire.messages[0].time, 61.0);

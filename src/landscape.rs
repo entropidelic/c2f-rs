@@ -11,6 +11,9 @@ pub struct Landscape {
     pub columns: usize,
     /// Side of a cell, in m.
     pub cell_size: f64,
+    /// Map coordinates of the lower-left corner of the grid.
+    pub lower_left_x: f64,
+    pub lower_left_y: f64,
     /// Fuel code of every cell, or `None` if the cell cannot burn.
     pub fuels: Vec<Option<u16>>,
 }
@@ -83,10 +86,24 @@ impl Landscape {
             ));
         }
 
+        // Some rasters give the centre of the lower-left cell instead of its corner.
+        let (lower_left_x, lower_left_y) = if header.contains_key("xllcenter") {
+            let center_x: f64 = header_value(&header, "xllcenter")?;
+            let center_y: f64 = header_value(&header, "yllcenter")?;
+            (center_x - cell_size / 2.0, center_y - cell_size / 2.0)
+        } else {
+            (
+                header_value(&header, "xllcorner")?,
+                header_value(&header, "yllcorner")?,
+            )
+        };
+
         Ok(Landscape {
             rows,
             columns,
             cell_size,
+            lower_left_x,
+            lower_left_y,
             fuels,
         })
     }
