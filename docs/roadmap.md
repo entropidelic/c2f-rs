@@ -175,7 +175,14 @@ Validation: the tests allow for C2F-W's rounding (up to 0.01).
 These are reproduced for now. Each one will either become a difference above, or stay
 because it is part of the model.
 
-- The Scott & Burgan length-to-breadth ratio is Anderson's formula raised to the power 0.45 (uncited).
+- The Scott & Burgan length-to-breadth ratio is Anderson's (1983) formula raised to the
+  power 0.45. The exponent is not in Anderson's paper, nor in the Scott & Burgan paper
+  (González-Olabarria et al. 2023, equation 2), and has been in the code without a comment
+  since its first version (C2FSB, 2022). It makes fires much rounder: at 30 km/h the ratio
+  is 2.5 instead of 7.7. It most likely compensates for using wind measured 10 m above the
+  ground, while Anderson's formula expects the weaker wind at flame height. It is part of
+  how this fire model behaves, so we keep it. A later option is to scale the wind down to
+  flame height explicitly and use Anderson's formula unchanged.
 - A cell reached by the fire that is too weak to ignite stays unburnt, and keeps receiving
   a message every period. The cell sending them does not burn out while that happens.
 
