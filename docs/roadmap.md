@@ -54,8 +54,8 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 |---|-------|-------------------|--------|
 | 1 | Scott & Burgan surface fire for one cell, fire ellipse, wind direction | `sb-asc`: 4739 cell intensities | **Done** |
 | 2 | Grid propagation: read fuels/lookup/weather, time steps, messages, ignition from a fixed cell, weather periods, end of fire | `sb-asc`: burnt cell count and every message (cells, time, rate) of all 113 fires | **Done** |
-| 3 | Outputs and command line: grids, messages, intensity, flame length | `sb-asc` output files | Next |
-| 4 | Slope (elevation raster) | New targets from the C++ build | Planned |
+| 3 | Command line program and output files: messages, arrival time, intensity and flame length maps | The program's output files for all 113 `sb-asc` fires: burnt cells, messages and intensity map. Flame length map checked against intensity | **Done** |
+| 4 | Slope (elevation raster) | New targets from the C++ build | Next |
 | 5 | Kitral fuel model; Portugal as another coefficient table | `test_kitral.cpp` values; `kitral-asc`, `portugal-asc` targets | Planned |
 | 6 | Random ignitions, many simulations, burn probability | Logged ignition cells (needs boost's mt19937 sampling) | Planned |
 | 7 | Crown fire (S&B, Kitral) | New targets | Planned |
@@ -79,15 +79,16 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 |---------|--------|
 | Rate of spread towards the 8 neighbours | Done |
 | Surface intensity | Done (S&B) |
-| Flame length | Computed (S&B), not yet checked against outputs |
+| Flame length | Done (S&B). Only checked against intensity: the reference data has no flame lengths |
 | Grid propagation and messages | Done |
 | Changing weather (several weather rows) | Done, but only checked with constant weather so far. `portugal-asc` and `fbp-asc` have changing weather. C2F-W changes the weather one period late (see Differences below). |
 | Fire from a given ignition cell | Done |
-| Reading `Ignitions.csv` | Planned (layer 3) |
+| Reading `Ignitions.csv` | Done (first row) |
 | Fuel raster in ASCII format (`fuels.asc`) and lookup table | Done |
-| GeoTIFF rasters (`.tif`) | Planned |
+| GeoTIFF rasters (`.tif`), as input and output | Planned |
 | Weather file (`Weather.csv`, wind columns) | Done |
-| Output files | Planned (layer 3) |
+| Output files: `messages.csv`, `arrival_time.asc`, `intensity.asc`, `flame_length.asc` | Done (see Differences below) |
+| Command line program | Done: instance folder, `--output`, `--ignition`, `--scenario` |
 | Slope | Planned (layer 4) |
 | Random ignition, ignition probability map | Planned (layer 6) |
 | Random weather files (`--weather random`) | Planned (layer 6) |
@@ -194,10 +195,32 @@ We checked that this repetition was not intended:
   burnt.
 
 C2F-W also writes intensity, flame length and rate of spread values in its output grids
-for those reached but unburnt cells. Our outputs (layer 3) will not.
+for those reached but unburnt cells. Our outputs do not (see below).
 
 Validation: in `sb-asc` every cell reached catches fire straight away, so the reference
 messages are unchanged. A unit test covers a cell that only ignites once the wind rises.
+
+### Fewer, self-describing output files
+
+C2F-W writes many folders (`Grids/`, `Messages/`, `SurfaceIntensity/`, ...) with numbered
+files, and its burn grids are plain tables of 0s and 1s without map coordinates. c2f-rs
+writes four files into one folder:
+
+- `messages.csv`: every spread, with a header: `from,to,time_minutes,rate_of_spread`.
+- `arrival_time.asc`: the minute each cell caught fire. Its burnt cells are the burn scar,
+  so a separate burn grid is not needed.
+- `intensity.asc` and `flame_length.asc`.
+
+The maps are in ESRI ASCII format with the landscape's map coordinates, and get a copy of
+`fuels.prj` when the instance has one, so GIS tools place them on the landscape.
+Unburnt cells have no data instead of 0. Cells are numbered from 1, as in C2F-W.
+
+A cell's intensity and flame length are those of its fire when it caught fire. C2F-W
+writes them every time a message is sent, so the last message decides the value, which
+depends on the order of its hash maps when the weather changes. For the same reason we
+write no rate of spread map: a cell spreads at a different rate in every direction, and
+C2F-W's map just keeps whichever direction was written last. The rates are in the
+messages instead.
 
 ## C2F-W quirks still reproduced
 

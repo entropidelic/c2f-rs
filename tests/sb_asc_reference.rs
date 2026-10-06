@@ -1,41 +1,26 @@
-//! Compares c2f-rs against C2F-W outputs for the 7x7 `sb-asc` instance: Scott & Burgan
-//! fuels, moisture scenario 1, wind of 10 km/h from the south for 5 hours, no elevation.
-//! C2F-W ran 113 fires there, each one from a random ignition cell that it logged.
+//! Runs the c2f-rs program on the 7x7 `sb-asc` instance and compares its output files with
+//! C2F-W's: Scott & Burgan fuels, moisture scenario 1, wind of 10 km/h from the south for
+//! 5 hours, no elevation. C2F-W ran 113 fires there, each one from a random ignition cell
+//! that it logged.
 
-use c2f_rs::landscape::Landscape;
-use c2f_rs::scott_burgan::{coefficients, surface_fire};
-use c2f_rs::simulation::{Settings, simulate};
-use c2f_rs::weather::{Weather, read_weather};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const DATA: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/sb-asc");
-const SCENARIO: u8 = 1;
 const SIMULATIONS: usize = 113;
+const NO_DATA: f32 = -9999.0;
 
-/// A message as (from, to, arrival minute, rate), with cells numbered from 0 and the
-/// rate in hundredths of m/min. C2F-W writes the rate rounded up to two decimals.
+/// A message as (from, to, minute, rate), with the rate in hundredths of m/min.
+/// C2F-W writes the rate rounded up to two decimals.
 type MessageKey = (usize, usize, u32, i64);
 
-fn read_landscape() -> Landscape {
-    let fuels = format!("{DATA}/input/fuels.asc");
-    let lookup_table = format!("{DATA}/input/spain_lookup_table.csv");
-    Landscape::read(Path::new(&fuels), Path::new(&lookup_table)).unwrap()
-}
-
-fn read_input_weather() -> Vec<Weather> {
-    read_weather(Path::new(&format!("{DATA}/input/Weather.csv"))).unwrap()
-}
-
-/// Ignition cell of every simulation, numbered from 0.
+/// Ignition cell of every simulation.
 fn read_ignition_cells() -> Vec<usize> {
     let text = fs::read_to_string(format!("{DATA}/expected/ignition_and_weather_log.csv")).unwrap();
     text.lines()
         .skip(1)
-        .map(|line| {
-            let cell: usize = line.split(',').nth(1).unwrap().parse().unwrap();
-            cell - 1
-        })
+        .map(|line| line.split(',').nth(1).unwrap().parse().unwrap())
         .collect()
 }
 
@@ -48,7 +33,7 @@ fn read_burnt_counts() -> Vec<usize> {
         .collect()
 }
 
-/// Messages of a simulation, sorted. C2F-W writes them in hash map order.
+/// C2F-W's messages of a simulation, sorted. C2F-W writes them in hash map order.
 ///
 /// C2F-W writes fire period numbers instead of times. Its period 0 already spreads the
 /// fire for one minute, so a fire that arrives after 4 minutes is written as period 3.
@@ -59,21 +44,66 @@ fn read_expected_messages(simulation: usize) -> Vec<MessageKey> {
         .lines()
         .map(|line| {
             let fields: Vec<&str> = line.split(',').collect();
-            let from: usize = fields[0].parse().unwrap();
-            let to: usize = fields[1].parse().unwrap();
             let period: u32 = fields[2].parse().unwrap();
             let rate: f64 = fields[3].parse().unwrap();
-            let arrival_minute = period + 1;
             (
-                from - 1,
-                to - 1,
-                arrival_minute,
+                fields[0].parse().unwrap(),
+                fields[1].parse().unwrap(),
+                period + 1,
                 (rate * 100.0).round() as i64,
             )
         })
         .collect();
     messages.sort();
     messages
+}
+
+/// Our messages, sorted, with the rate rounded up like C2F-W does.
+fn read_computed_messages(path: &Path) -> Vec<MessageKey> {
+    let mut messages: Vec<MessageKey> = fs::read_to_string(path)
+        .unwrap()
+        .lines()
+        .skip(1)
+        .map(|line| {
+            let fields: Vec<&str> = line.split(',').collect();
+            let minute: f32 = fields[2].parse().unwrap();
+            let rate: f64 = fields[3].parse().unwrap();
+            (
+                fields[0].parse().unwrap(),
+                fields[1].parse().unwrap(),
+                minute.round() as u32,
+                (rate * 100.0).ceil() as i64,
+            )
+        })
+        .collect();
+    messages.sort();
+    messages
+}
+
+/// Values of a map in ESRI ASCII format, row by row.
+fn read_map(path: &Path) -> Vec<f32> {
+    fs::read_to_string(path)
+        .unwrap()
+        .lines()
+        .filter(|line| !line.starts_with(char::is_alphabetic))
+        .flat_map(|line| line.split_whitespace())
+        .map(|value| value.parse().unwrap())
+        .collect()
+}
+
+fn run_c2f_rs(ignition: usize, output: &Path) {
+    let status = Command::new(env!("CARGO_BIN_EXE_c2f-rs"))
+        .arg(format!("{DATA}/input"))
+        .args(["--output", output.to_str().unwrap()])
+        .args(["--ignition", &ignition.to_string()])
+        .args(["--scenario", "1"])
+        .output()
+        .unwrap();
+    assert!(
+        status.status.success(),
+        "{}",
+        String::from_utf8_lossy(&status.stderr)
+    );
 }
 
 fn describe_difference(computed: &[MessageKey], expected: &[MessageKey]) -> String {
@@ -94,14 +124,42 @@ fn describe_difference(computed: &[MessageKey], expected: &[MessageKey]) -> Stri
     )
 }
 
+/// Compares the intensity map with C2F-W's, where unburnt cells are 0 instead of no data,
+/// and checks that the flame length map matches the intensity map.
+fn compare_maps(simulation: usize, output: &Path, failures: &mut Vec<String>) {
+    let expected_path =
+        format!("{DATA}/expected/SurfaceIntensity/SurfaceIntensity{simulation:03}.asc");
+    let expected_intensity = read_map(Path::new(&expected_path));
+    let intensity = read_map(&output.join("intensity.asc"));
+    let flame_length = read_map(&output.join("flame_length.asc"));
+
+    for cell in 0..expected_intensity.len() {
+        let expected = expected_intensity[cell];
+        let computed = intensity[cell];
+        let burnt = computed != NO_DATA;
+        // C2F-W rounds intensity up to two decimals, then prints six significant digits.
+        let tolerance = 0.01 + expected * 1e-5;
+        if burnt != (expected != 0.0) || (burnt && (computed - expected).abs() > tolerance) {
+            failures.push(format!(
+                "sim {simulation}, cell {}: intensity {computed}, expected {expected}",
+                cell + 1
+            ));
+        }
+
+        // Intensity comes from the flame length, through Byram's relation.
+        let intensity_from_flame_length = 259.833 * flame_length[cell].powf(2.174);
+        if burnt && (intensity_from_flame_length - computed).abs() > computed * 1e-4 {
+            failures.push(format!(
+                "sim {simulation}, cell {}: flame length {} does not match intensity {computed}",
+                cell + 1,
+                flame_length[cell]
+            ));
+        }
+    }
+}
+
 #[test]
-fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
-    let landscape = read_landscape();
-    let weather = read_input_weather();
-    let settings = Settings {
-        moisture_scenario: SCENARIO,
-        ..Settings::default()
-    };
+fn every_fire_matches_c2f_w_outputs() {
     let ignition_cells = read_ignition_cells();
     let burnt_counts = read_burnt_counts();
     assert_eq!(ignition_cells.len(), SIMULATIONS);
@@ -110,26 +168,23 @@ fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
     let mut failures = Vec::new();
     for (index, &ignition) in ignition_cells.iter().enumerate() {
         let simulation = index + 1;
-        let fire = simulate(&landscape, &weather, ignition, &settings).unwrap();
+        let output =
+            PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join(format!("sb-asc-{simulation:03}"));
+        run_c2f_rs(ignition, &output);
 
-        if fire.burnt_cells.len() != burnt_counts[index] {
+        let arrival_time = read_map(&output.join("arrival_time.asc"));
+        let burnt_count = arrival_time
+            .iter()
+            .filter(|&&minute| minute != NO_DATA)
+            .count();
+        if burnt_count != burnt_counts[index] {
             failures.push(format!(
-                "sim {simulation}: {} burnt cells, expected {}",
-                fire.burnt_cells.len(),
+                "sim {simulation}: {burnt_count} burnt cells, expected {}",
                 burnt_counts[index]
             ));
         }
 
-        let mut messages: Vec<MessageKey> = fire
-            .messages
-            .iter()
-            .map(|message| {
-                let arrival_minute = message.time.round() as u32;
-                let rate_in_hundredths = (f64::from(message.rate) * 100.0).ceil() as i64;
-                (message.from, message.to, arrival_minute, rate_in_hundredths)
-            })
-            .collect();
-        messages.sort();
+        let messages = read_computed_messages(&output.join("messages.csv"));
         let expected_messages = read_expected_messages(simulation);
         if messages != expected_messages {
             failures.push(format!(
@@ -137,6 +192,8 @@ fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
                 describe_difference(&messages, &expected_messages)
             ));
         }
+
+        compare_maps(simulation, &output, &mut failures);
     }
 
     assert!(
@@ -144,50 +201,5 @@ fn every_fire_burns_the_same_cells_and_sends_the_same_messages() {
         "{} problems:\n{}",
         failures.len(),
         failures.join("\n")
-    );
-}
-
-/// The intensity grid holds, for every burnt cell, the intensity of its own fuel under
-/// the weather, which does not change in this instance. Unburnt cells are 0.
-#[test]
-fn intensity_matches_every_burnt_cell() {
-    let landscape = read_landscape();
-    let wind_speed = read_input_weather()[0].wind_speed;
-    let mut checked = 0;
-    let mut mismatches = Vec::new();
-
-    for simulation in 1..=SIMULATIONS {
-        let path = format!("{DATA}/expected/SurfaceIntensity/SurfaceIntensity{simulation:03}.asc");
-        let text = fs::read_to_string(path).unwrap();
-        let values = text
-            .lines()
-            .skip(6)
-            .flat_map(|line| line.split_whitespace());
-
-        for (cell, value) in values.enumerate() {
-            let expected: f32 = value.parse().unwrap();
-            if expected == 0.0 {
-                continue;
-            }
-            let fuel = coefficients(SCENARIO, landscape.fuels[cell].unwrap()).unwrap();
-            let computed = surface_fire(fuel, wind_speed).intensity;
-
-            // C2F-W rounds intensity up to two decimals, then prints six significant digits.
-            let tolerance = 0.01 + expected * 1e-5;
-            if (computed - expected).abs() > tolerance {
-                mismatches.push(format!(
-                    "sim {simulation}, cell {cell}: expected {expected}, computed {computed}"
-                ));
-            }
-            checked += 1;
-        }
-    }
-
-    assert!(checked > 0);
-    assert!(
-        mismatches.is_empty(),
-        "{} of {checked} cells differ:\n{}",
-        mismatches.len(),
-        mismatches.join("\n")
     );
 }
