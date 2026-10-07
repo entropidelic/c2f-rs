@@ -42,11 +42,15 @@ such as QGIS place them on the landscape.
 ## Visualizing a result
 
 `scripts/plot_fire.py` draws the fuel map next to the fire's arrival time, and saves the
-image as `fire.png` in the results folder. It needs Python with numpy and matplotlib.
+image as `fire.png` in the results folder. Run it with [uv](https://docs.astral.sh/uv/):
 
 ```
-python3 scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc/fuels.asc
+uv run scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc/fuels.asc
 ```
+
+The script lists its Python version and packages at the top, and
+`scripts/plot_fire.py.lock` pins their exact versions. On first use, uv installs them in an
+environment of its own, so every machine draws with the same versions.
 
 ## Documentation
 

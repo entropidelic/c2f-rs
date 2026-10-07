@@ -1,10 +1,17 @@
+# /// script
+# requires-python = "==3.14.*"
+# dependencies = [
+#     "matplotlib>=3.9.4",
+#     "numpy>=2.0.2",
+# ]
+# ///
 """Draws the result of a c2f-rs run: the fuel map next to the fire's arrival time.
 
 Usage:
-    python3 scripts/plot_fire.py <results folder> <fuels.asc> [image.png]
+    uv run scripts/plot_fire.py <results folder> <fuels.asc> [image.png]
 
 The image is saved to <results folder>/fire.png unless another path is given.
-Needs numpy and matplotlib.
+uv installs the Python version and packages pinned in plot_fire.py.lock on first use.
 """
 
 import sys
