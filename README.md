@@ -39,6 +39,15 @@ The results folder gets:
 The maps are in ESRI ASCII format, with the landscape's map coordinates, so GIS tools
 such as QGIS place them on the landscape.
 
+## Visualizing a result
+
+`scripts/plot_fire.py` draws the fuel map next to the fire's arrival time, and saves the
+image as `fire.png` in the results folder. It needs Python with numpy and matplotlib.
+
+```
+python3 scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc/fuels.asc
+```
+
 ## Documentation
 
 - [Roadmap](docs/roadmap.md): how the simulator works, the plan, and progress towards full
