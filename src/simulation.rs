@@ -5,12 +5,17 @@
 //! When it reaches the centre of a neighbour, a message is sent, and the neighbour
 //! ignites if its own fire would be strong enough. A burning cell burns out when its
 //! fire is too weak or there is nothing left around it to burn.
+//!
+//! A [`Simulation`] is a running fire that advances one step at a time, so a program can
+//! look at it, or change the weather, between steps. [`simulate`] runs a whole fire with
+//! a table of hourly weather.
 
 use crate::ellipse::{FireEllipse, heading_from_wind};
 use crate::landscape::Landscape;
 use crate::scott_burgan::{self, FuelCoefficients, SurfaceFire};
 use crate::weather::Weather;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Settings {
     /// Fuel moisture scenario, from 1 (driest) to 4 (wettest).
     pub moisture_scenario: u8,
@@ -58,126 +63,188 @@ pub struct BurntCell {
     pub flame_length: f32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Fire {
     pub messages: Vec<Message>,
-    /// Every cell that caught fire, starting with the ignition cell.
+    /// Every cell that caught fire, in the order they caught fire.
     pub burnt_cells: Vec<BurntCell>,
 }
 
+/// What happened during one step.
+pub struct Changes<'a> {
+    /// Cells that caught fire.
+    pub burnt_cells: &'a [BurntCell],
+    /// The spreads that set them on fire.
+    pub messages: &'a [Message],
+}
+
+#[derive(Clone)]
 struct BurningCell {
     cell: usize,
     /// How far the fire has travelled towards each neighbour, in m, by neighbour position.
     progress: [f64; 8],
 }
 
+/// A running fire. Copying it gives an independent fire that can continue differently.
+#[derive(Clone)]
+pub struct Simulation<'a> {
+    landscape: &'a Landscape,
+    settings: Settings,
+    /// The fuel model coefficients of every cell, or `None` for cells without fuel.
+    fuels: Vec<Option<&'static FuelCoefficients>>,
+    /// Cells with fuel that have not caught fire yet.
+    available: Vec<bool>,
+    available_count: usize,
+    burning: Vec<BurningCell>,
+    steps_done: u32,
+    fire: Fire,
+}
+
+impl<'a> Simulation<'a> {
+    /// A landscape with no fire yet.
+    pub fn new(landscape: &'a Landscape, settings: &Settings) -> Result<Self, String> {
+        let fuels = fuel_coefficients(landscape, settings.moisture_scenario)?;
+        let available: Vec<bool> = fuels.iter().map(|fuel| fuel.is_some()).collect();
+        let available_count = available
+            .iter()
+            .filter(|&&is_available| is_available)
+            .count();
+
+        Ok(Simulation {
+            landscape,
+            settings: *settings,
+            fuels,
+            available,
+            available_count,
+            burning: Vec::new(),
+            steps_done: 0,
+            fire: Fire::default(),
+        })
+    }
+
+    /// Starts a fire at `cell`, under the current weather. Nothing happens if the cell has
+    /// no fuel or is already on fire.
+    pub fn ignite(&mut self, cell: usize, weather: &Weather) -> Result<(), String> {
+        if cell >= self.available.len() {
+            return Err(format!(
+                "cell {cell} is outside the landscape, which has {} cells",
+                self.available.len()
+            ));
+        }
+        if let Some(fuel) = self.fuels[cell].filter(|_| self.available[cell]) {
+            let cell_fire = surface_fire(fuel, weather);
+            self.set_on_fire(cell, self.time(), &cell_fire);
+        }
+        Ok(())
+    }
+
+    /// Advances the fire by one fire period, under `weather`.
+    pub fn step(&mut self, weather: &Weather) -> Changes<'_> {
+        let end_time = self.time() + self.settings.fire_period_minutes;
+        let first_new_burnt_cell = self.fire.burnt_cells.len();
+        let first_new_message = self.fire.messages.len();
+
+        let mut arrivals = Vec::new();
+        self.burning.retain_mut(|burning_cell| {
+            spread(
+                burning_cell,
+                self.landscape,
+                &self.fuels,
+                &self.available,
+                weather,
+                &self.settings,
+                end_time,
+                &mut arrivals,
+            )
+        });
+
+        let mut reached: Vec<usize> = arrivals.iter().map(|arrival| arrival.to).collect();
+        reached.sort_unstable();
+        reached.dedup();
+        for cell in reached {
+            let fuel = self.fuels[cell].expect("the fire only reaches cells with fuel");
+            let cell_fire = surface_fire(fuel, weather);
+            if cell_fire.head_ros > self.settings.ros_threshold {
+                self.set_on_fire(cell, end_time, &cell_fire);
+            }
+        }
+
+        // Only arrivals that set a cell on fire become messages. A cell that could not
+        // ignite stays available, and will be reached again next step.
+        let ignitions = arrivals
+            .into_iter()
+            .filter(|arrival| !self.available[arrival.to]);
+        self.fire.messages.extend(ignitions);
+
+        self.steps_done += 1;
+        Changes {
+            burnt_cells: &self.fire.burnt_cells[first_new_burnt_cell..],
+            messages: &self.fire.messages[first_new_message..],
+        }
+    }
+
+    /// The fire is over when no cell is burning, or there is nothing left to burn.
+    pub fn is_over(&self) -> bool {
+        self.burning.is_empty() || self.available_count == 0
+    }
+
+    /// Minutes since the simulation started.
+    pub fn time(&self) -> f32 {
+        self.steps_done as f32 * self.settings.fire_period_minutes
+    }
+
+    /// The fire so far.
+    pub fn fire(&self) -> &Fire {
+        &self.fire
+    }
+
+    pub fn into_fire(self) -> Fire {
+        self.fire
+    }
+
+    fn set_on_fire(&mut self, cell: usize, time: f32, cell_fire: &SurfaceFire) {
+        self.available[cell] = false;
+        self.available_count -= 1;
+        self.fire.burnt_cells.push(BurntCell {
+            cell,
+            time,
+            intensity: cell_fire.intensity,
+            flame_length: cell_fire.flame_length,
+        });
+        self.burning.push(BurningCell {
+            cell,
+            progress: [0.0; 8],
+        });
+    }
+}
+
 /// Simulates one fire, started at `ignition`, until it dies out, there is nothing
-/// left to burn, or the weather runs out.
+/// left to burn, or the weather runs out. Each weather row lasts
+/// `settings.weather_period_minutes`.
 pub fn simulate(
     landscape: &Landscape,
     weather: &[Weather],
     ignition: usize,
     settings: &Settings,
 ) -> Result<Fire, String> {
-    let fuels = fuel_coefficients(landscape, settings.moisture_scenario)?;
-    if ignition >= fuels.len() {
-        return Err(format!(
-            "the ignition cell is outside the landscape, which has {} cells",
-            fuels.len()
-        ));
-    }
     if weather.is_empty() {
         return Err("the weather has no rows".to_string());
     }
-
-    let mut fire = Fire::default();
-    let Some(ignition_fuel) = fuels[ignition] else {
-        return Ok(fire);
-    };
-
-    // Cells with fuel that have not caught fire yet.
-    let mut available: Vec<bool> = fuels.iter().map(|fuel| fuel.is_some()).collect();
-    let mut available_count = available
-        .iter()
-        .filter(|&&is_available| is_available)
-        .count();
-
-    available[ignition] = false;
-    available_count -= 1;
-    let ignition_fire = surface_fire(ignition_fuel, &weather[0]);
-    fire.burnt_cells.push(BurntCell {
-        cell: ignition,
-        time: 0.0,
-        intensity: ignition_fire.intensity,
-        flame_length: ignition_fire.flame_length,
-    });
-    let mut burning = vec![BurningCell {
-        cell: ignition,
-        progress: [0.0; 8],
-    }];
+    let mut simulation = Simulation::new(landscape, settings)?;
+    simulation.ignite(ignition, &weather[0])?;
 
     // The fire can last as long as the weather rows cover.
-    let period_count = (settings.weather_period_minutes / settings.fire_period_minutes
+    let step_count = (settings.weather_period_minutes / settings.fire_period_minutes
         * weather.len() as f32) as u32;
-    for period in 0..period_count {
-        let start_time = period as f32 * settings.fire_period_minutes;
-        let end_time = start_time + settings.fire_period_minutes;
-        let current_weather = &weather[(start_time / settings.weather_period_minutes) as usize];
-
-        let mut arrivals = Vec::new();
-        burning.retain_mut(|burning_cell| {
-            spread(
-                burning_cell,
-                landscape,
-                &fuels,
-                &available,
-                current_weather,
-                settings,
-                end_time,
-                &mut arrivals,
-            )
-        });
-
-        let fire_died_out = arrivals.is_empty() && burning.is_empty();
-        if fire_died_out {
+    for _ in 0..step_count {
+        if simulation.is_over() {
             break;
         }
-
-        let mut reached: Vec<usize> = arrivals.iter().map(|arrival| arrival.to).collect();
-        reached.sort_unstable();
-        reached.dedup();
-        for cell in reached {
-            let fuel = fuels[cell].expect("the fire only reaches cells with fuel");
-            let cell_fire = surface_fire(fuel, current_weather);
-            if cell_fire.head_ros > settings.ros_threshold {
-                available[cell] = false;
-                available_count -= 1;
-                fire.burnt_cells.push(BurntCell {
-                    cell,
-                    time: end_time,
-                    intensity: cell_fire.intensity,
-                    flame_length: cell_fire.flame_length,
-                });
-                burning.push(BurningCell {
-                    cell,
-                    progress: [0.0; 8],
-                });
-            }
-        }
-
-        // Only arrivals that set a cell on fire become messages. A cell that could not
-        // ignite stays available, and will be reached again next period.
-        let ignitions = arrivals
-            .into_iter()
-            .filter(|arrival| !available[arrival.to]);
-        fire.messages.extend(ignitions);
-
-        if available_count == 0 {
-            break;
-        }
+        let weather_row = (simulation.time() / settings.weather_period_minutes) as usize;
+        simulation.step(&weather[weather_row]);
     }
 
-    Ok(fire)
+    Ok(simulation.into_fire())
 }
 
 /// Advances the fire of a burning cell for one fire period, towards its available
@@ -266,30 +333,37 @@ mod tests {
     /// TL1 timber litter: too slow to ignite without wind in the driest scenario.
     const LITTER: u16 = 181;
 
-    #[test]
-    fn a_cell_that_cannot_ignite_yet_gets_a_message_only_when_it_catches_fire() {
-        let landscape = Landscape {
+    const CALM: Weather = Weather {
+        wind_speed: 0.0,
+        wind_direction: 270.0,
+    };
+    const WINDY: Weather = Weather {
+        wind_speed: 20.0,
+        wind_direction: 270.0,
+    };
+
+    fn grass_next_to_litter() -> Landscape {
+        Landscape {
             rows: 1,
             columns: 2,
             cell_size: 100.0,
             lower_left_x: 0.0,
             lower_left_y: 0.0,
             fuels: vec![Some(GRASS), Some(LITTER)],
-        };
-        let calm = Weather {
-            wind_speed: 0.0,
-            wind_direction: 270.0,
-        };
-        let windy = Weather {
-            wind_speed: 20.0,
-            wind_direction: 270.0,
-        };
-        let settings = Settings {
+        }
+    }
+
+    fn driest_scenario() -> Settings {
+        Settings {
             moisture_scenario: 1,
             ..Settings::default()
-        };
+        }
+    }
 
-        let fire = simulate(&landscape, &[calm, windy], 0, &settings).unwrap();
+    #[test]
+    fn a_cell_that_cannot_ignite_yet_gets_a_message_only_when_it_catches_fire() {
+        let landscape = grass_next_to_litter();
+        let fire = simulate(&landscape, &[CALM, WINDY], 0, &driest_scenario()).unwrap();
 
         // The grass fire reaches the litter within minutes, but the litter only ignites
         // when the wind rises, in the first minute of the second hour.
@@ -298,5 +372,25 @@ mod tests {
         assert_eq!(fire.messages.len(), 1);
         assert_eq!(fire.messages[0].to, 1);
         assert_eq!(fire.messages[0].time, 61.0);
+    }
+
+    #[test]
+    fn each_step_reports_what_changed_under_the_weather_it_is_given() {
+        let landscape = grass_next_to_litter();
+        let mut simulation = Simulation::new(&landscape, &driest_scenario()).unwrap();
+        simulation.ignite(0, &CALM).unwrap();
+
+        for _ in 0..10 {
+            let changes = simulation.step(&CALM);
+            assert!(changes.burnt_cells.is_empty());
+        }
+
+        // The wind rises after 10 minutes, and the litter catches fire straight away.
+        let changes = simulation.step(&WINDY);
+        assert_eq!(changes.burnt_cells.len(), 1);
+        assert_eq!(changes.burnt_cells[0].cell, 1);
+        assert_eq!(changes.burnt_cells[0].time, 11.0);
+        assert_eq!(changes.messages.len(), 1);
+        assert!(simulation.is_over());
     }
 }

@@ -52,6 +52,8 @@ python3 scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-
 
 - [Roadmap](docs/roadmap.md): how the simulator works, the plan, and progress towards full
   compatibility with C2F-W.
+- [Architecture](docs/architecture.md): c2f-rs as the core of the simulation, and options for
+  what can be built on top of it, such as an interactive user interface.
 - [Resources](docs/resources.md): what to read to understand fire spread modelling.
 
 ## Code

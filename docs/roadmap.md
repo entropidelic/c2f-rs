@@ -61,6 +61,10 @@ Reference data used by the tests lives in `tests/data/` (see the README there).
 | 7 | Crown fire (S&B, Kitral) | New targets | Planned |
 | 8 | Canadian FBP fuel model | `fbp-asc` targets; cffdrs test data | Planned |
 
+Besides these layers, [architecture.md](architecture.md) proposes changes that make c2f-rs
+easier to build other programs on, such as an interactive user interface. The first one, a
+fire that advances step by step, is done. The others are not scheduled yet.
+
 ## Compatibility with C2F-W
 
 ### Fuel models
