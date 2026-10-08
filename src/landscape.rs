@@ -2,7 +2,8 @@
 //!
 //! Cells are numbered from 0, row by row, starting at the top-left (north-west) corner.
 
-use crate::error::{InputError, parse_value, read_text};
+use crate::error::InputError;
+use crate::files::{parse_value, read_text};
 use std::collections::HashMap;
 use std::path::Path;
 

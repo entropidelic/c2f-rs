@@ -1,5 +1,6 @@
 pub mod ellipse;
 pub mod error;
+mod files;
 pub mod instance;
 pub mod landscape;
 pub mod output;

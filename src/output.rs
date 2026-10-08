@@ -3,10 +3,11 @@
 //!
 //! Cells are numbered from 1 in the output files, as in C2F-W instances.
 
-use crate::error::{OutputError, create_folder, write_text};
+use crate::error::OutputError;
 use crate::landscape::Landscape;
 use crate::simulation::Fire;
 use std::fmt::Write;
+use std::fs;
 use std::path::Path;
 
 /// Value of the map cells that did not burn.
@@ -83,4 +84,20 @@ fn ascii_grid(landscape: &Landscape, values: &[Option<f32>]) -> String {
         writeln!(text, "{}", row_text.join(" ")).unwrap();
     }
     text
+}
+
+/// Creates a folder, and the folders above it if needed.
+fn create_folder(path: &Path) -> Result<(), OutputError> {
+    fs::create_dir_all(path).map_err(|source| OutputError {
+        path: path.to_path_buf(),
+        source,
+    })
+}
+
+/// Writes a whole text file.
+fn write_text(path: &Path, contents: &str) -> Result<(), OutputError> {
+    fs::write(path, contents).map_err(|source| OutputError {
+        path: path.to_path_buf(),
+        source,
+    })
 }

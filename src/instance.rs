@@ -1,6 +1,7 @@
 //! An instance folder: the inputs of a simulation, in the same layout C2F-W uses.
 
-use crate::error::{InputError, read_text};
+use crate::error::InputError;
+use crate::files::read_text;
 use crate::landscape::Landscape;
 use crate::weather::{Weather, read_weather};
 use std::fs;

@@ -1,6 +1,7 @@
 //! Weather during the fire, one row per weather period (an hour by default).
 
-use crate::error::{InputError, parse_value, read_text};
+use crate::error::InputError;
+use crate::files::{parse_value, read_text};
 use std::path::Path;
 
 pub struct Weather {
