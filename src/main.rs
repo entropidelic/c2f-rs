@@ -66,11 +66,11 @@ fn run(arguments: &Arguments) -> Result<(), Box<dyn Error>> {
         instance.projection.as_deref(),
     )?;
 
-    let last_time = fire
-        .burnt_cells
-        .iter()
-        .map(|burnt| burnt.time)
-        .fold(0.0, f32::max);
+    // Burnt cells are in the order they caught fire, so the last one is the latest.
+    let last_time = match fire.burnt_cells.last() {
+        Some(burnt) => burnt.time,
+        None => 0.0,
+    };
     println!(
         "{} cells burnt; the last one caught fire after {last_time} minutes.",
         fire.burnt_cells.len()

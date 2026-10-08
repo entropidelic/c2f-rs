@@ -61,11 +61,11 @@ c2f-rs (one package)
 A running fire is a value that consumers hold and drive:
 
 ```rust
-let mut simulation = Simulation::new(&landscape, &settings)?;
+let mut simulation = Simulation::new(landscape, &settings)?;
 simulation.ignite(cell, &weather)?;
 while !simulation.is_over() {
     let changes = simulation.step(&weather);   // one fire period, under this weather
-    draw(changes.burnt_cells);                 // only the cells that just caught fire
+    draw(&changes.burnt_cells);                // only the cells that just caught fire
     // between steps: change the weather, start another fire, ...
 }
 let fire = simulation.into_fire();             // every burnt cell and message
@@ -76,6 +76,8 @@ let fire = simulation.into_fire();             // every burnt cell and message
 - The weather is given at every step, so it can come from a file, a slider in a user
   interface, or a weather forecast.
 - `ignite` starts a fire at any cell, at any time, so a fire can have several origins.
+- A `Simulation` owns its landscape, so a program can keep it as a single value.
+  `landscape()` gives read access to the grid.
 - A `Simulation` can be copied, to let two copies of the same fire continue differently and
   compare them ("what if" scenarios). Its state is small: a flag per cell, and the burning
   cells with how far their fire has advanced towards each neighbour.

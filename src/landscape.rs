@@ -6,6 +6,7 @@ use crate::error::{InputError, read_text};
 use std::collections::HashMap;
 use std::path::Path;
 
+#[derive(Clone)]
 pub struct Landscape {
     pub rows: usize,
     pub columns: usize,

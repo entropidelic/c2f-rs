@@ -72,11 +72,11 @@ pub struct Fire {
 }
 
 /// What happened during one step.
-pub struct Changes<'a> {
+pub struct Changes {
     /// Cells that caught fire.
-    pub burnt_cells: &'a [BurntCell],
+    pub burnt_cells: Vec<BurntCell>,
     /// The spreads that set them on fire.
-    pub messages: &'a [Message],
+    pub messages: Vec<Message>,
 }
 
 #[derive(Clone)]
@@ -88,8 +88,8 @@ struct BurningCell {
 
 /// A running fire. Copying it gives an independent fire that can continue differently.
 #[derive(Clone)]
-pub struct Simulation<'a> {
-    landscape: &'a Landscape,
+pub struct Simulation {
+    landscape: Landscape,
     settings: Settings,
     /// The fuel model coefficients of every cell, or `None` for cells without fuel.
     fuels: Vec<Option<&'static FuelCoefficients>>,
@@ -101,15 +101,13 @@ pub struct Simulation<'a> {
     fire: Fire,
 }
 
-impl<'a> Simulation<'a> {
+impl Simulation {
     /// A landscape with no fire yet.
-    pub fn new(landscape: &'a Landscape, settings: &Settings) -> Result<Self, SimulationError> {
-        let fuels = fuel_coefficients(landscape, settings.moisture_scenario)?;
+    pub fn new(landscape: Landscape, settings: &Settings) -> Result<Self, SimulationError> {
+        let fuels = fuel_coefficients(&landscape, settings.moisture_scenario)?;
+        // At the start, every cell with fuel is available.
         let available: Vec<bool> = fuels.iter().map(|fuel| fuel.is_some()).collect();
-        let available_count = available
-            .iter()
-            .filter(|&&is_available| is_available)
-            .count();
+        let available_count = fuels.iter().filter(|fuel| fuel.is_some()).count();
 
         Ok(Simulation {
             landscape,
@@ -132,32 +130,32 @@ impl<'a> Simulation<'a> {
                 cell_count: self.available.len(),
             });
         }
-        if let Some(fuel) = self.fuels[cell].filter(|_| self.available[cell]) {
-            let cell_fire = surface_fire(fuel, weather);
-            self.set_on_fire(cell, self.time(), &cell_fire);
+        // Cells without fuel, and cells already on fire, are not available.
+        if !self.available[cell] {
+            return Ok(());
         }
+        let fuel = self.fuels[cell].expect("available cells have fuel");
+        let cell_fire = surface_fire(fuel, weather);
+        self.set_on_fire(cell, self.time(), &cell_fire);
         Ok(())
     }
 
     /// Advances the fire by one fire period, under `weather`.
-    pub fn step(&mut self, weather: &Weather) -> Changes<'_> {
+    pub fn step(&mut self, weather: &Weather) -> Changes {
         let end_time = self.time() + self.settings.fire_period_minutes;
         let first_new_burnt_cell = self.fire.burnt_cells.len();
         let first_new_message = self.fire.messages.len();
 
+        // The burning cells are taken out of the simulation while they spread, so that
+        // `spread` can read the rest of it.
         let mut arrivals = Vec::new();
-        self.burning.retain_mut(|burning_cell| {
-            spread(
-                burning_cell,
-                self.landscape,
-                &self.fuels,
-                &self.available,
-                weather,
-                &self.settings,
-                end_time,
-                &mut arrivals,
-            )
-        });
+        let mut still_burning = Vec::new();
+        for mut burning_cell in std::mem::take(&mut self.burning) {
+            if self.spread(&mut burning_cell, weather, end_time, &mut arrivals) {
+                still_burning.push(burning_cell);
+            }
+        }
+        self.burning = still_burning;
 
         let mut reached: Vec<usize> = arrivals.iter().map(|arrival| arrival.to).collect();
         reached.sort_unstable();
@@ -179,8 +177,8 @@ impl<'a> Simulation<'a> {
 
         self.steps_done += 1;
         Changes {
-            burnt_cells: &self.fire.burnt_cells[first_new_burnt_cell..],
-            messages: &self.fire.messages[first_new_message..],
+            burnt_cells: self.fire.burnt_cells[first_new_burnt_cell..].to_vec(),
+            messages: self.fire.messages[first_new_message..].to_vec(),
         }
     }
 
@@ -194,6 +192,10 @@ impl<'a> Simulation<'a> {
         self.steps_done as f32 * self.settings.fire_period_minutes
     }
 
+    pub fn landscape(&self) -> &Landscape {
+        &self.landscape
+    }
+
     /// The fire so far.
     pub fn fire(&self) -> &Fire {
         &self.fire
@@ -201,6 +203,56 @@ impl<'a> Simulation<'a> {
 
     pub fn into_fire(self) -> Fire {
         self.fire
+    }
+
+    /// Advances the fire of a burning cell for one fire period, towards its available
+    /// neighbours, and records an arrival for every neighbour whose centre has been
+    /// reached by `end_time`. A neighbour that could not ignite is reached again every
+    /// period, until it catches fire.
+    ///
+    /// Returns false when the cell has burnt out.
+    fn spread(
+        &self,
+        burning_cell: &mut BurningCell,
+        weather: &Weather,
+        end_time: f32,
+        arrivals: &mut Vec<Message>,
+    ) -> bool {
+        let fuel = self.fuels[burning_cell.cell].expect("only cells with fuel burn");
+        let fire = surface_fire(fuel, weather);
+        if fire.head_ros <= self.settings.ros_threshold {
+            return false;
+        }
+
+        let heading = heading_from_wind(weather.wind_direction);
+        let ellipse = FireEllipse::new(
+            fire.head_ros,
+            fire.back_ros,
+            fire.length_to_breadth,
+            heading,
+        );
+        let mut has_something_to_burn = false;
+
+        for neighbour in self.landscape.neighbours(burning_cell.cell) {
+            if !self.available[neighbour.cell] {
+                continue;
+            }
+            has_something_to_burn = true;
+
+            let rate = ellipse.spread_rate_towards(neighbour.direction) as f32;
+            let progress = &mut burning_cell.progress[neighbour.position];
+            *progress += f64::from(rate * self.settings.fire_period_minutes);
+            if *progress >= neighbour.distance {
+                arrivals.push(Message {
+                    from: burning_cell.cell,
+                    to: neighbour.cell,
+                    time: end_time,
+                    rate,
+                });
+            }
+        }
+
+        has_something_to_burn
     }
 
     fn set_on_fire(&mut self, cell: usize, time: f32, cell_fire: &SurfaceFire) {
@@ -231,7 +283,7 @@ pub fn simulate(
     if weather.is_empty() {
         return Err(SimulationError::NoWeather);
     }
-    let mut simulation = Simulation::new(landscape, settings)?;
+    let mut simulation = Simulation::new(landscape.clone(), settings)?;
     simulation.ignite(ignition, &weather[0])?;
 
     // The fire can last as long as the weather rows cover.
@@ -248,60 +300,6 @@ pub fn simulate(
     Ok(simulation.into_fire())
 }
 
-/// Advances the fire of a burning cell for one fire period, towards its available
-/// neighbours, and records an arrival for every neighbour whose centre has been reached
-/// by `end_time`. A neighbour that could not ignite is reached again every period, until
-/// it catches fire.
-///
-/// Returns false when the cell has burnt out.
-#[allow(clippy::too_many_arguments)]
-fn spread(
-    burning_cell: &mut BurningCell,
-    landscape: &Landscape,
-    fuels: &[Option<&FuelCoefficients>],
-    available: &[bool],
-    weather: &Weather,
-    settings: &Settings,
-    end_time: f32,
-    arrivals: &mut Vec<Message>,
-) -> bool {
-    let fuel = fuels[burning_cell.cell].expect("only cells with fuel burn");
-    let fire = surface_fire(fuel, weather);
-    if fire.head_ros <= settings.ros_threshold {
-        return false;
-    }
-
-    let heading = heading_from_wind(weather.wind_direction);
-    let ellipse = FireEllipse::new(
-        fire.head_ros,
-        fire.back_ros,
-        fire.length_to_breadth,
-        heading,
-    );
-    let mut has_something_to_burn = false;
-
-    for neighbour in landscape.neighbours(burning_cell.cell) {
-        if !available[neighbour.cell] {
-            continue;
-        }
-        has_something_to_burn = true;
-
-        let rate = ellipse.spread_rate_towards(neighbour.direction) as f32;
-        let progress = &mut burning_cell.progress[neighbour.position];
-        *progress += f64::from(rate * settings.fire_period_minutes);
-        if *progress >= neighbour.distance {
-            arrivals.push(Message {
-                from: burning_cell.cell,
-                to: neighbour.cell,
-                time: end_time,
-                rate,
-            });
-        }
-    }
-
-    has_something_to_burn
-}
-
 fn surface_fire(fuel: &FuelCoefficients, weather: &Weather) -> SurfaceFire {
     scott_burgan::surface_fire(fuel, weather.wind_speed)
 }
@@ -311,19 +309,23 @@ fn fuel_coefficients(
     landscape: &Landscape,
     scenario: u8,
 ) -> Result<Vec<Option<&'static FuelCoefficients>>, SimulationError> {
-    landscape
-        .fuels
-        .iter()
-        .map(|fuel_code| match fuel_code {
-            None => Ok(None),
-            Some(code) => scott_burgan::coefficients(scenario, *code).map(Some).ok_or(
-                SimulationError::UnknownFuel {
-                    code: *code,
-                    scenario,
-                },
-            ),
-        })
-        .collect()
+    let mut fuels = Vec::with_capacity(landscape.fuels.len());
+    for fuel_code in &landscape.fuels {
+        let coefficients = match fuel_code {
+            None => None,
+            Some(code) => {
+                let found = scott_burgan::coefficients(scenario, *code).ok_or(
+                    SimulationError::UnknownFuel {
+                        code: *code,
+                        scenario,
+                    },
+                )?;
+                Some(found)
+            }
+        };
+        fuels.push(coefficients);
+    }
+    Ok(fuels)
 }
 
 #[cfg(test)]
@@ -378,8 +380,7 @@ mod tests {
 
     #[test]
     fn each_step_reports_what_changed_under_the_weather_it_is_given() {
-        let landscape = grass_next_to_litter();
-        let mut simulation = Simulation::new(&landscape, &driest_scenario()).unwrap();
+        let mut simulation = Simulation::new(grass_next_to_litter(), &driest_scenario()).unwrap();
         simulation.ignite(0, &CALM).unwrap();
 
         for _ in 0..10 {
