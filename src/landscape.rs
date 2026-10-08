@@ -2,7 +2,7 @@
 //!
 //! Cells are numbered from 0, row by row, starting at the top-left (north-west) corner.
 
-use crate::error::{InputError, read_text};
+use crate::error::{InputError, parse_value, read_text};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -65,10 +65,7 @@ impl Landscape {
                 continue;
             }
             for token in tokens {
-                let value: i32 = token.parse().map_err(|_| InputError::InvalidValue {
-                    path: fuels_path.to_path_buf(),
-                    value: token.to_string(),
-                })?;
+                let value: i32 = parse_value(token, fuels_path)?;
                 let is_fuel = fuel_names
                     .get(&value)
                     .is_some_and(|name| !name.starts_with("No"));
@@ -153,13 +150,7 @@ fn read_lookup_table(path: &Path) -> Result<HashMap<i32, String>, InputError> {
         if fields.len() < 4 {
             continue;
         }
-        let value: i32 = fields[0]
-            .trim()
-            .parse()
-            .map_err(|_| InputError::InvalidValue {
-                path: path.to_path_buf(),
-                value: fields[0].to_string(),
-            })?;
+        let value: i32 = parse_value(fields[0].trim(), path)?;
         fuel_names.insert(value, fields[3].trim().to_string());
     }
     Ok(fuel_names)
@@ -175,8 +166,5 @@ fn read_header_value<T: std::str::FromStr>(
         path: path.to_path_buf(),
         key: key.to_string(),
     })?;
-    value.parse().map_err(|_| InputError::InvalidValue {
-        path: path.to_path_buf(),
-        value: value.clone(),
-    })
+    parse_value(value, path)
 }

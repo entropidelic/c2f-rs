@@ -3,11 +3,10 @@
 //!
 //! Cells are numbered from 1 in the output files, as in C2F-W instances.
 
-use crate::error::OutputError;
+use crate::error::{OutputError, create_folder, write_text};
 use crate::landscape::Landscape;
 use crate::simulation::Fire;
 use std::fmt::Write;
-use std::fs;
 use std::path::Path;
 
 /// Value of the map cells that did not burn.
@@ -27,10 +26,7 @@ pub fn write_results(
     fire: &Fire,
     projection: Option<&str>,
 ) -> Result<(), OutputError> {
-    fs::create_dir_all(folder).map_err(|source| OutputError {
-        path: folder.to_path_buf(),
-        source,
-    })?;
+    create_folder(folder)?;
 
     let mut messages = String::from("from,to,time_minutes,rate_of_spread\n");
     for message in &fire.messages {
@@ -38,7 +34,7 @@ pub fn write_results(
         let to = message.to + 1;
         writeln!(messages, "{from},{to},{},{}", message.time, message.rate).unwrap();
     }
-    write_file(&folder.join("messages.csv"), &messages)?;
+    write_text(&folder.join("messages.csv"), &messages)?;
 
     let cell_count = landscape.rows * landscape.columns;
     let mut arrival_time = vec![None; cell_count];
@@ -55,12 +51,12 @@ pub fn write_results(
         ("intensity", intensity),
         ("flame_length", flame_length),
     ] {
-        write_file(
+        write_text(
             &folder.join(format!("{name}.asc")),
             &ascii_grid(landscape, &values),
         )?;
         if let Some(projection) = projection {
-            write_file(&folder.join(format!("{name}.prj")), projection)?;
+            write_text(&folder.join(format!("{name}.prj")), projection)?;
         }
     }
     Ok(())
@@ -87,11 +83,4 @@ fn ascii_grid(landscape: &Landscape, values: &[Option<f32>]) -> String {
         writeln!(text, "{}", row_text.join(" ")).unwrap();
     }
     text
-}
-
-fn write_file(path: &Path, contents: &str) -> Result<(), OutputError> {
-    fs::write(path, contents).map_err(|source| OutputError {
-        path: path.to_path_buf(),
-        source,
-    })
 }

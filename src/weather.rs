@@ -1,6 +1,6 @@
 //! Weather during the fire, one row per weather period (an hour by default).
 
-use crate::error::{InputError, read_text};
+use crate::error::{InputError, parse_value, read_text};
 use std::path::Path;
 
 pub struct Weather {
@@ -51,8 +51,5 @@ fn parse_field<T: std::str::FromStr>(
     path: &Path,
 ) -> Result<T, InputError> {
     let value = fields.get(column).copied().unwrap_or_default();
-    value.parse().map_err(|_| InputError::InvalidValue {
-        path: path.to_path_buf(),
-        value: value.to_string(),
-    })
+    parse_value(value, path)
 }
