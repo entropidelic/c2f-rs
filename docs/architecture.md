@@ -15,6 +15,7 @@ c2f-rs (one package)
 ├── library
 │   ├── scott_burgan   fuel model: fuel + wind → rates of spread, flame length, intensity
 │   ├── ellipse        fire shape: rates of spread in every direction
+│   ├── error          the errors the library returns
 │   ├── landscape      the grid of cells and fuels   (+ reads fuels.asc)
 │   ├── weather        weather rows                  (+ reads Weather.csv)
 │   ├── simulation     a running fire that advances step by step, and simulate() for a whole fire
@@ -54,8 +55,6 @@ c2f-rs (one package)
 3. **Everything is one package.** File reading and writing, and the command line
    dependency (`clap`), are compiled into every consumer, including a browser app that has
    no files and no command line.
-4. **Errors are plain text.** A program can show them, but cannot easily tell a missing file
-   from an invalid fuel code. That matters once other programs depend on the library.
 
 ## A fire that advances step by step (done)
 
@@ -82,6 +81,21 @@ let fire = simulation.into_fire();             // every burnt cell and message
   cells with how far their fire has advanced towards each neighbour.
 - `simulate` runs a whole fire with a table of hourly weather, as a short loop over `step`.
   The command line program uses it.
+
+## Typed errors (done)
+
+The library returns typed errors, made with `thiserror`, so a program can tell them apart
+and react to each one:
+
+- `InputError`, reading the input files: a file that cannot be read, an invalid value, a
+  missing header entry or column, a file with no rows, a raster with the wrong size.
+- `SimulationError`, starting or running a fire: a fuel code without a fuel model, a cell
+  outside the landscape, no weather.
+- `OutputError`, writing the results.
+
+Each one carries the details (which file, which value, which cell), and prints a message a
+person can read. The command line program just prints them. It checks the user's input
+itself where the message needs the user's point of view, such as cells numbered from 1.
 
 ## Proposed changes
 

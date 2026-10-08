@@ -2,6 +2,7 @@ use c2f_rs::instance::Instance;
 use c2f_rs::output::write_results;
 use c2f_rs::simulation::{Settings, simulate};
 use clap::Parser;
+use std::error::Error;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -23,7 +24,7 @@ struct Arguments {
     ignition: Option<usize>,
 
     /// Fuel moisture scenario, from 1 (driest) to 4 (wettest)
-    #[arg(long, default_value_t = 3)]
+    #[arg(long, default_value_t = 3, value_parser = clap::value_parser!(u8).range(1..=4))]
     scenario: u8,
 }
 
@@ -38,11 +39,15 @@ fn main() -> ExitCode {
     }
 }
 
-fn run(arguments: &Arguments) -> Result<(), String> {
+fn run(arguments: &Arguments) -> Result<(), Box<dyn Error>> {
     let instance = Instance::read(&arguments.instance)?;
 
+    let cell_count = instance.landscape.rows * instance.landscape.columns;
     let ignition = match arguments.ignition {
-        Some(0) => return Err("cells are numbered from 1".to_string()),
+        Some(cell) if cell == 0 || cell > cell_count => {
+            let message = format!("--ignition must be a cell from 1 to {cell_count}");
+            return Err(message.into());
+        }
         Some(cell) => cell - 1,
         None => instance
             .ignition

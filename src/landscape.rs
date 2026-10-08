@@ -2,8 +2,8 @@
 //!
 //! Cells are numbered from 0, row by row, starting at the top-left (north-west) corner.
 
+use crate::error::{InputError, read_text};
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 
 pub struct Landscape {
@@ -46,10 +46,9 @@ impl Landscape {
     /// Reads a fuel raster in ESRI ASCII format (`fuels.asc`) and the lookup table that
     /// says which raster values are fuels. Values missing from the table, or named
     /// "Non-fuel" in it, cannot burn.
-    pub fn read(fuels_path: &Path, lookup_table_path: &Path) -> Result<Landscape, String> {
+    pub fn read(fuels_path: &Path, lookup_table_path: &Path) -> Result<Landscape, InputError> {
         let fuel_names = read_lookup_table(lookup_table_path)?;
-        let text = fs::read_to_string(fuels_path)
-            .map_err(|error| format!("cannot read {}: {error}", fuels_path.display()))?;
+        let text = read_text(fuels_path)?;
 
         let mut header = HashMap::new();
         let mut fuels = Vec::new();
@@ -65,8 +64,9 @@ impl Landscape {
                 continue;
             }
             for token in tokens {
-                let value: i32 = token.parse().map_err(|_| {
-                    format!("invalid fuel value '{token}' in {}", fuels_path.display())
+                let value: i32 = token.parse().map_err(|_| InputError::InvalidValue {
+                    path: fuels_path.to_path_buf(),
+                    value: token.to_string(),
                 })?;
                 let is_fuel = fuel_names
                     .get(&value)
@@ -75,26 +75,27 @@ impl Landscape {
             }
         }
 
-        let rows: usize = header_value(&header, "nrows")?;
-        let columns: usize = header_value(&header, "ncols")?;
-        let cell_size: f64 = header_value(&header, "cellsize")?;
+        let rows: usize = read_header_value(&header, "nrows", fuels_path)?;
+        let columns: usize = read_header_value(&header, "ncols", fuels_path)?;
+        let cell_size: f64 = read_header_value(&header, "cellsize", fuels_path)?;
         if fuels.len() != rows * columns {
-            return Err(format!(
-                "{} has {} values, expected {rows} rows x {columns} columns",
-                fuels_path.display(),
-                fuels.len()
-            ));
+            return Err(InputError::WrongSize {
+                path: fuels_path.to_path_buf(),
+                values: fuels.len(),
+                rows,
+                columns,
+            });
         }
 
         // Some rasters give the centre of the lower-left cell instead of its corner.
         let (lower_left_x, lower_left_y) = if header.contains_key("xllcenter") {
-            let center_x: f64 = header_value(&header, "xllcenter")?;
-            let center_y: f64 = header_value(&header, "yllcenter")?;
+            let center_x: f64 = read_header_value(&header, "xllcenter", fuels_path)?;
+            let center_y: f64 = read_header_value(&header, "yllcenter", fuels_path)?;
             (center_x - cell_size / 2.0, center_y - cell_size / 2.0)
         } else {
             (
-                header_value(&header, "xllcorner")?,
-                header_value(&header, "yllcorner")?,
+                read_header_value(&header, "xllcorner", fuels_path)?,
+                read_header_value(&header, "yllcorner", fuels_path)?,
             )
         };
 
@@ -143,9 +144,8 @@ impl Landscape {
 }
 
 /// Reads the lookup table: raster value in the first column, fuel name in the fourth.
-fn read_lookup_table(path: &Path) -> Result<HashMap<i32, String>, String> {
-    let text = fs::read_to_string(path)
-        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+fn read_lookup_table(path: &Path) -> Result<HashMap<i32, String>, InputError> {
+    let text = read_text(path)?;
     let mut fuel_names = HashMap::new();
     for line in text.lines().skip(1) {
         let fields: Vec<&str> = line.split(',').collect();
@@ -155,20 +155,27 @@ fn read_lookup_table(path: &Path) -> Result<HashMap<i32, String>, String> {
         let value: i32 = fields[0]
             .trim()
             .parse()
-            .map_err(|_| format!("invalid raster value '{}' in {}", fields[0], path.display()))?;
+            .map_err(|_| InputError::InvalidValue {
+                path: path.to_path_buf(),
+                value: fields[0].to_string(),
+            })?;
         fuel_names.insert(value, fields[3].trim().to_string());
     }
     Ok(fuel_names)
 }
 
-fn header_value<T: std::str::FromStr>(
+/// A number from the raster header, such as "ncols 7".
+fn read_header_value<T: std::str::FromStr>(
     header: &HashMap<String, String>,
     key: &str,
-) -> Result<T, String> {
-    let value = header
-        .get(key)
-        .ok_or(format!("missing '{key}' in the raster header"))?;
-    value
-        .parse()
-        .map_err(|_| format!("invalid '{key}' in the raster header: {value}"))
+    path: &Path,
+) -> Result<T, InputError> {
+    let value = header.get(key).ok_or_else(|| InputError::MissingHeader {
+        path: path.to_path_buf(),
+        key: key.to_string(),
+    })?;
+    value.parse().map_err(|_| InputError::InvalidValue {
+        path: path.to_path_buf(),
+        value: value.clone(),
+    })
 }

@@ -11,6 +11,7 @@
 //! a table of hourly weather.
 
 use crate::ellipse::{FireEllipse, heading_from_wind};
+use crate::error::SimulationError;
 use crate::landscape::Landscape;
 use crate::scott_burgan::{self, FuelCoefficients, SurfaceFire};
 use crate::weather::Weather;
@@ -102,7 +103,7 @@ pub struct Simulation<'a> {
 
 impl<'a> Simulation<'a> {
     /// A landscape with no fire yet.
-    pub fn new(landscape: &'a Landscape, settings: &Settings) -> Result<Self, String> {
+    pub fn new(landscape: &'a Landscape, settings: &Settings) -> Result<Self, SimulationError> {
         let fuels = fuel_coefficients(landscape, settings.moisture_scenario)?;
         let available: Vec<bool> = fuels.iter().map(|fuel| fuel.is_some()).collect();
         let available_count = available
@@ -124,12 +125,12 @@ impl<'a> Simulation<'a> {
 
     /// Starts a fire at `cell`, under the current weather. Nothing happens if the cell has
     /// no fuel or is already on fire.
-    pub fn ignite(&mut self, cell: usize, weather: &Weather) -> Result<(), String> {
+    pub fn ignite(&mut self, cell: usize, weather: &Weather) -> Result<(), SimulationError> {
         if cell >= self.available.len() {
-            return Err(format!(
-                "cell {cell} is outside the landscape, which has {} cells",
-                self.available.len()
-            ));
+            return Err(SimulationError::CellOutsideLandscape {
+                cell,
+                cell_count: self.available.len(),
+            });
         }
         if let Some(fuel) = self.fuels[cell].filter(|_| self.available[cell]) {
             let cell_fire = surface_fire(fuel, weather);
@@ -226,9 +227,9 @@ pub fn simulate(
     weather: &[Weather],
     ignition: usize,
     settings: &Settings,
-) -> Result<Fire, String> {
+) -> Result<Fire, SimulationError> {
     if weather.is_empty() {
-        return Err("the weather has no rows".to_string());
+        return Err(SimulationError::NoWeather);
     }
     let mut simulation = Simulation::new(landscape, settings)?;
     simulation.ignite(ignition, &weather[0])?;
@@ -309,17 +310,18 @@ fn surface_fire(fuel: &FuelCoefficients, weather: &Weather) -> SurfaceFire {
 fn fuel_coefficients(
     landscape: &Landscape,
     scenario: u8,
-) -> Result<Vec<Option<&'static FuelCoefficients>>, String> {
+) -> Result<Vec<Option<&'static FuelCoefficients>>, SimulationError> {
     landscape
         .fuels
         .iter()
         .map(|fuel_code| match fuel_code {
             None => Ok(None),
-            Some(code) => scott_burgan::coefficients(scenario, *code)
-                .map(Some)
-                .ok_or(format!(
-                    "no Scott & Burgan fuel model {code} for moisture scenario {scenario}"
-                )),
+            Some(code) => scott_burgan::coefficients(scenario, *code).map(Some).ok_or(
+                SimulationError::UnknownFuel {
+                    code: *code,
+                    scenario,
+                },
+            ),
         })
         .collect()
 }

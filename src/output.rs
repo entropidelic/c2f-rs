@@ -3,6 +3,7 @@
 //!
 //! Cells are numbered from 1 in the output files, as in C2F-W instances.
 
+use crate::error::OutputError;
 use crate::landscape::Landscape;
 use crate::simulation::Fire;
 use std::fmt::Write;
@@ -25,9 +26,11 @@ pub fn write_results(
     landscape: &Landscape,
     fire: &Fire,
     projection: Option<&str>,
-) -> Result<(), String> {
-    fs::create_dir_all(folder)
-        .map_err(|error| format!("cannot create {}: {error}", folder.display()))?;
+) -> Result<(), OutputError> {
+    fs::create_dir_all(folder).map_err(|source| OutputError {
+        path: folder.to_path_buf(),
+        source,
+    })?;
 
     let mut messages = String::from("from,to,time_minutes,rate_of_spread\n");
     for message in &fire.messages {
@@ -86,6 +89,9 @@ fn ascii_grid(landscape: &Landscape, values: &[Option<f32>]) -> String {
     text
 }
 
-fn write_file(path: &Path, contents: &str) -> Result<(), String> {
-    fs::write(path, contents).map_err(|error| format!("cannot write {}: {error}", path.display()))
+fn write_file(path: &Path, contents: &str) -> Result<(), OutputError> {
+    fs::write(path, contents).map_err(|source| OutputError {
+        path: path.to_path_buf(),
+        source,
+    })
 }

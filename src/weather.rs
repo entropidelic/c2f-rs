@@ -1,6 +1,6 @@
 //! Weather during the fire, one row per weather period (an hour by default).
 
-use std::fs;
+use crate::error::{InputError, read_text};
 use std::path::Path;
 
 pub struct Weather {
@@ -12,9 +12,8 @@ pub struct Weather {
 
 /// Reads a weather file such as `Weather.csv`. Columns are found by name: `WS` for wind
 /// speed and `WD` for wind direction.
-pub fn read_weather(path: &Path) -> Result<Vec<Weather>, String> {
-    let text = fs::read_to_string(path)
-        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+pub fn read_weather(path: &Path) -> Result<Vec<Weather>, InputError> {
+    let text = read_text(path)?;
     let mut lines = text.lines();
 
     let header: Vec<&str> = lines
@@ -27,7 +26,10 @@ pub fn read_weather(path: &Path) -> Result<Vec<Weather>, String> {
         header
             .iter()
             .position(|column| *column == name)
-            .ok_or(format!("missing column '{name}' in {}", path.display()))
+            .ok_or_else(|| InputError::MissingColumn {
+                path: path.to_path_buf(),
+                column: name.to_string(),
+            })
     };
     let wind_speed_column = column_of("WS")?;
     let wind_direction_column = column_of("WD")?;
@@ -47,9 +49,10 @@ fn parse_field<T: std::str::FromStr>(
     fields: &[&str],
     column: usize,
     path: &Path,
-) -> Result<T, String> {
+) -> Result<T, InputError> {
     let value = fields.get(column).copied().unwrap_or_default();
-    value
-        .parse()
-        .map_err(|_| format!("invalid value '{value}' in {}", path.display()))
+    value.parse().map_err(|_| InputError::InvalidValue {
+        path: path.to_path_buf(),
+        value: value.to_string(),
+    })
 }

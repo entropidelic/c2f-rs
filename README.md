@@ -71,6 +71,7 @@ environment of its own, so every machine draws with the same versions.
 - `src/landscape.rs`: the grid of cells and their fuels, read from `fuels.asc`.
 - `src/weather.rs`: weather rows, read from `Weather.csv`.
 - `src/output.rs`: writes the results.
+- `src/error.rs`: the errors the library returns.
 - `tests/sb_asc_reference.rs`: runs the program and compares its outputs with C2F-W's.
 
 ## Running the tests
