@@ -3,16 +3,6 @@
 A Rust reimplementation of [Cell2Fire-W](https://github.com/fire2a/C2F-W), a grid-based
 forest fire spread simulator.
 
-We build it one layer at a time, checking each layer against the original C++ simulator.
-The aim is to keep the code easy to read and extend.
-
-## Status
-
-Layers 1 to 3 of the [roadmap](docs/roadmap.md) are done. c2f-rs simulates one fire with the
-Scott & Burgan fuel model, on flat ground, from a C2F-W instance folder. It matches the
-burnt cells, messages and intensities of all 113 reference fires in C2F-W's `sb-asc` test
-instance.
-
 ## Usage
 
 ```
