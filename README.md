@@ -13,11 +13,8 @@ The instance folder has the same layout as in C2F-W: `fuels.asc`, `spain_lookup_
 `Weather.csv`, and optionally `Ignitions.csv` and `fuels.prj`. Cells are numbered from 1,
 row by row, starting at the top-left corner. Run with `--help` for details.
 
-For example, with the C2F-W repository next to this one:
-
-```
-cargo run --release -- ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc --output results --scenario 1
-```
+To try it, this repository includes a small 7×7 instance in `tests/data/sb-asc/input`. It
+has no `Ignitions.csv`, so give the ignition cell with `--ignition`.
 
 The program writes four files to the results folder:
 
@@ -35,7 +32,7 @@ The viewer is a desktop app that runs the simulation live: press Play to watch t
 spread, change the wind while it runs, and click on the map to start fires.
 
 ```
-cargo run --release -p c2f-viewer -- ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc
+cargo run --release -p c2f-viewer -- <instance folder>
 ```
 
 Scroll to zoom and drag to pan. The first build takes a minute or two.
@@ -46,7 +43,7 @@ Scroll to zoom and drag to pan. The first build takes a minute or two.
 image as `fire.png` in the results folder. Run it with [uv](https://docs.astral.sh/uv/):
 
 ```
-uv run scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc/fuels.asc
+uv run scripts/plot_fire.py <results folder> <instance folder>/fuels.asc
 ```
 
 The script declares its Python version and dependencies; `scripts/plot_fire.py.lock`
