@@ -62,28 +62,6 @@ uv run scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-a
 The script declares its Python version and dependencies; `scripts/plot_fire.py.lock`
 pins their versions. On first use, uv installs them in an isolated environment.
 
-## Documentation
-
-- [Roadmap](docs/roadmap.md): simulation model, planned work and C2F-W compatibility.
-- [Architecture](docs/architecture.md): library design, viewer and possible integrations.
-- [Resources](docs/resources.md): papers, guides and reference implementations.
-
-## Code
-
-- `src/main.rs`: the command line program.
-- `src/simulation.rs`: fire spread over the grid, one fire period at a time.
-- `src/scott_burgan.rs`: Scott & Burgan surface fire behaviour (rate of spread, flame
-  length, intensity).
-- `src/ellipse.rs`: elliptical fire shape and wind direction conventions.
-- `src/instance.rs`: reads an instance folder.
-- `src/landscape.rs`: the grid of cells and their fuels, read from `fuels.asc`.
-- `src/weather.rs`: weather rows, read from `Weather.csv`.
-- `src/files.rs`: reads text files and reports file paths in errors.
-- `src/output.rs`: writes the results.
-- `src/error.rs`: the errors the library returns.
-- `tests/sb_asc_reference.rs`: runs the program and compares its outputs with C2F-W's.
-- `viewer/`: the desktop viewer, a separate package that uses the library.
-
 ## Running the tests
 
 ```
