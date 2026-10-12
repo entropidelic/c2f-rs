@@ -89,3 +89,34 @@ pins their versions. On first use, uv installs them in an isolated environment.
 ```
 cargo test
 ```
+
+## Credits
+
+c2f-rs is based on these projects and papers:
+
+- [Cell2Fire](https://github.com/cell2fire/Cell2Fire), by Cristóbal Pais, Jaime Carrasco,
+  David Martell, Andrés Weintraub and David L. Woodruff. The model is described in
+  [Pais et al. (2021)](https://doi.org/10.3389/ffgc.2021.692706).
+- [C2F-W](https://github.com/fire2a/C2F-W), by the fire2a team, which adds the Scott & Burgan
+  and Kitral fuel models to Cell2Fire. The Scott & Burgan version is described in
+  [González-Olabarria et al. (2023)](https://doi.org/10.3389/ffgc.2023.1071484).
+
+Two parts of this repository are copied from C2F-W:
+
+- the Scott & Burgan coefficient tables in `src/scott_burgan/coefficients.rs`, taken from
+  C2F-W's `Cell2Fire/FuelModelSpain.cpp`;
+- the reference data in `tests/data/`, used to check that c2f-rs gives the same results
+  (see [tests/data/README.md](tests/data/README.md)).
+
+The rest of the code is new, but it follows how C2F-W works, as described in the
+[roadmap](docs/roadmap.md). The [resources](docs/resources.md) list the other papers the
+model relies on, such as Scott & Burgan (2005) for the fuel models and Anderson (1983) for
+the fire shape.
+
+## Licence
+
+c2f-rs is licensed under the GNU General Public License, version 3, the same licence as
+Cell2Fire and C2F-W. See [LICENSE](LICENSE) for the full text.
+
+In short, you can use, study, change and share c2f-rs. If you share it, or a changed version
+of it, you have to share the source code too, under the same licence.

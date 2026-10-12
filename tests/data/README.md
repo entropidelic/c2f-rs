@@ -1,6 +1,7 @@
 # Reference data
 
-Copied from [C2F-W](https://github.com/fire2a/C2F-W) at commit `83b0c3bc`.
+Copied from [C2F-W](https://github.com/fire2a/C2F-W) at commit `83b0c3bc`, which is licensed
+under the GNU General Public License, version 3.
 
 ## sb-asc
 
