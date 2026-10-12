@@ -52,9 +52,10 @@ c2f-rs (one package)
 2. **The fuel model is hard-wired.** The simulation calls Scott & Burgan directly. Adding
    Kitral or FBP (layers 5 and 8) needs a common way to ask "how does this cell burn under
    this weather?".
-3. **Everything is one package.** File reading and writing, and the command line
-   dependency (`clap`), are compiled into every consumer, including a browser app that has
-   no files and no command line.
+3. **The library is still one package.** The viewer is a separate package in a Cargo
+   workspace, but it depends on the whole library, so file reading and writing, and the
+   command line dependency (`clap`), are compiled into it. That is fine on the desktop. A
+   browser version would need the split described below.
 
 ## A fire that advances step by step (done)
 
@@ -98,6 +99,19 @@ and react to each one:
 Each one carries the details (which file, which value, which cell), and prints a message a
 person can read. The command line program just prints them. It checks the user's input
 itself where the message needs the user's point of view, such as cells numbered from 1.
+
+## The viewer (first prototype)
+
+`viewer/` is a desktop app made with egui. It is the first program built on the
+`Simulation`, and lives in the same Cargo workspace as the library. It shows the fuel map,
+with burnt cells coloured by how long ago they caught fire, so the fire front glows. The
+user can play, pause, step and reset the fire, choose how many simulated minutes pass per
+frame and after how many hours to stop (by default as long as the weather file covers, like
+C2F-W), set the wind with sliders while the fire runs, change the fuel moisture scenario,
+click on the map to start fires, and zoom and pan the map.
+
+Not in this first version: drawing firebreaks, comparing "what if" copies, following the
+weather file hour by hour, a real map underneath, and the browser version.
 
 ## Proposed changes
 
@@ -156,8 +170,8 @@ the simulation free of file access and printing (as it is) is enough.
 
 1. ~~**The step-by-step fire.**~~ Done.
 2. **The common fuel model interface**, together with Kitral (layer 5).
-3. **A first user interface prototype with egui**, as a separate package in a workspace,
-   which is when the package split happens. It is the shortest path to seeing and playing
-   with the fire, and it can run in the browser too.
+3. ~~**A first user interface prototype with egui.**~~ Done: the `viewer` package. The
+   split of the library into core, input/output and command line packages can wait until
+   a browser version or another consumer needs it.
 4. **Python bindings**, if c2f-rs is to be used from notebooks, fire2a or QGIS.
 5. A map-based web interface, or a web service, once the core is stable.

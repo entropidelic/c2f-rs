@@ -39,6 +39,17 @@ The results folder gets:
 The maps are in ESRI ASCII format, with the landscape's map coordinates, so GIS tools
 such as QGIS place them on the landscape.
 
+## Watching a fire spread
+
+The viewer is a desktop app that runs the simulation live: press Play to watch the fire
+spread, change the wind while it runs, and click on the map to start fires.
+
+```
+cargo run --release -p c2f-viewer -- ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc
+```
+
+Scroll to zoom, and drag to move the map. The first build takes a minute or two.
+
 ## Visualizing a result
 
 `scripts/plot_fire.py` draws the fuel map next to the fire's arrival time, and saves the
@@ -74,6 +85,7 @@ environment of its own, so every machine draws with the same versions.
 - `src/output.rs`: writes the results.
 - `src/error.rs`: the errors the library returns.
 - `tests/sb_asc_reference.rs`: runs the program and compares its outputs with C2F-W's.
+- `viewer/`: the desktop viewer, a separate package that uses the library.
 
 ## Running the tests
 

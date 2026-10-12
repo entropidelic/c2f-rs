@@ -1,0 +1,8 @@
+[package]
+name = "c2f-viewer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+c2f-rs = { path = ".." }
+eframe = "0.36.2"
