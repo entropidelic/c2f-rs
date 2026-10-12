@@ -1,9 +1,8 @@
 //! Elliptical fire shape.
 //!
-//! Pushed by the wind, a fire that starts at a point grows into an ellipse.
-//! The ignition point sits at the rear focus of that ellipse, so the fire
-//! advances fastest downwind (the head), slowest upwind (the back), and at
-//! in-between rates in every other direction.
+//! A fire grows as a wind-oriented ellipse, with ignition at the rear focus.
+//! Spread is fastest downwind (the head), slowest upwind (the back), and
+//! between those rates in other directions.
 //!
 //! Directions are angles in degrees with 0 = east, 90 = north (counterclockwise).
 
@@ -38,11 +37,11 @@ impl FireEllipse {
     }
 }
 
-/// Converts a weather wind direction into the direction the fire is pushed.
+/// Converts the wind's source bearing to the fire's direction of travel.
 ///
 /// Weather files give the compass bearing the wind blows from (0 = north,
-/// clockwise). The fire moves the opposite way, returned as a direction
-/// with 0 = east, counterclockwise.
+/// clockwise). The returned direction points downwind, with 0 = east and
+/// angles increasing counterclockwise.
 pub fn heading_from_wind(wind_from: f64) -> f64 {
     let bearing_towards = (wind_from + 180.0) % 360.0;
     (90.0 - bearing_towards).rem_euclid(360.0)

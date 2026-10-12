@@ -1,5 +1,4 @@
-//! Writes the results of a fire: a table of messages, and maps in ESRI ASCII format
-//! that any GIS tool can open on top of the landscape.
+//! Writes spread messages and georeferenced ESRI ASCII maps.
 //!
 //! Cells are numbered from 1 in the output files, as in C2F-W instances.
 
@@ -15,10 +14,9 @@ const NO_DATA: i32 = -9999;
 
 /// Writes into `folder`:
 ///
-/// - `messages.csv`: every spread from a cell to a neighbour, with the time it caught fire
-///   and the rate of spread between them.
-/// - `arrival_time.asc`: the minute each cell caught fire. Its burnt cells are the burn scar.
-/// - `intensity.asc` and `flame_length.asc`: each burnt cell's fire when it caught fire.
+/// - `messages.csv`: spread events, with the target cell's ignition time and rate of spread.
+/// - `arrival_time.asc`: ignition time in minutes for each burnt cell.
+/// - `intensity.asc` and `flame_length.asc`: intensity and flame length at ignition.
 ///
 /// If `projection` is given, a `.prj` file is written next to each map.
 pub fn write_results(
@@ -86,7 +84,7 @@ fn ascii_grid(landscape: &Landscape, values: &[Option<f32>]) -> String {
     text
 }
 
-/// Creates a folder, and the folders above it if needed.
+/// Creates a folder and any missing parent folders.
 fn create_folder(path: &Path) -> Result<(), OutputError> {
     fs::create_dir_all(path).map_err(|source| OutputError {
         path: path.to_path_buf(),

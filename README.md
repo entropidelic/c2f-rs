@@ -3,15 +3,15 @@
 A Rust reimplementation of [Cell2Fire-W](https://github.com/fire2a/C2F-W), a grid-based
 forest fire spread simulator.
 
-The goal is a simulator that is simple to read, use and extend. It is rebuilt one layer at
-a time, and every layer is checked against outputs of the original C++ simulator.
+We build it one layer at a time, checking each layer against the original C++ simulator.
+The aim is to keep the code easy to read and extend.
 
 ## Status
 
 Layers 1 to 3 of the [roadmap](docs/roadmap.md) are done. c2f-rs simulates one fire with the
-Scott & Burgan fuel model, on flat ground, from a C2F-W instance folder. On C2F-W's `sb-asc`
-test instance it reproduces all 113 reference fires: the same burnt cells, messages and
-intensities.
+Scott & Burgan fuel model, on flat ground, from a C2F-W instance folder. It matches the
+burnt cells, messages and intensities of all 113 reference fires in C2F-W's `sb-asc` test
+instance.
 
 ## Usage
 
@@ -29,15 +29,15 @@ For example, with the C2F-W repository next to this one:
 cargo run --release -- ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc --output results --scenario 1
 ```
 
-The results folder gets:
+The program writes four files to the results folder:
 
-- `messages.csv`: every spread from a cell to a neighbour, with the minute the neighbour
-  caught fire and the rate of spread between them.
-- `arrival_time.asc`: the minute each cell caught fire. Its burnt cells are the burn scar.
-- `intensity.asc` and `flame_length.asc`: the fire of each burnt cell.
+- `messages.csv`: spread events between neighbouring cells, with the ignition time and
+  rate of spread.
+- `arrival_time.asc`: the minute each cell caught fire; also records the burn scar.
+- `intensity.asc` and `flame_length.asc`: intensity and flame length at each cell's ignition.
 
-The maps are in ESRI ASCII format, with the landscape's map coordinates, so GIS tools
-such as QGIS place them on the landscape.
+The maps use ESRI ASCII format and the landscape's coordinates, so they line up with
+the landscape in GIS tools such as QGIS.
 
 ## Watching a fire spread
 
@@ -48,28 +48,25 @@ spread, change the wind while it runs, and click on the map to start fires.
 cargo run --release -p c2f-viewer -- ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc
 ```
 
-Scroll to zoom, and drag to move the map. The first build takes a minute or two.
+Scroll to zoom and drag to pan. The first build takes a minute or two.
 
 ## Visualizing a result
 
-`scripts/plot_fire.py` draws the fuel map next to the fire's arrival time, and saves the
+`scripts/plot_fire.py` plots the fuel map beside the arrival-time map and saves the
 image as `fire.png` in the results folder. Run it with [uv](https://docs.astral.sh/uv/):
 
 ```
 uv run scripts/plot_fire.py results ../C2F-W/data/ScottAndBurgan/Vilopriu_2013-asc/fuels.asc
 ```
 
-The script lists its Python version and packages at the top, and
-`scripts/plot_fire.py.lock` pins their exact versions. On first use, uv installs them in an
-environment of its own, so every machine draws with the same versions.
+The script declares its Python version and dependencies; `scripts/plot_fire.py.lock`
+pins their versions. On first use, uv installs them in an isolated environment.
 
 ## Documentation
 
-- [Roadmap](docs/roadmap.md): how the simulator works, the plan, and progress towards full
-  compatibility with C2F-W.
-- [Architecture](docs/architecture.md): c2f-rs as the core of the simulation, and options for
-  what can be built on top of it, such as an interactive user interface.
-- [Resources](docs/resources.md): what to read to understand fire spread modelling.
+- [Roadmap](docs/roadmap.md): simulation model, planned work and C2F-W compatibility.
+- [Architecture](docs/architecture.md): library design, viewer and possible integrations.
+- [Resources](docs/resources.md): papers, guides and reference implementations.
 
 ## Code
 
@@ -81,7 +78,7 @@ environment of its own, so every machine draws with the same versions.
 - `src/instance.rs`: reads an instance folder.
 - `src/landscape.rs`: the grid of cells and their fuels, read from `fuels.asc`.
 - `src/weather.rs`: weather rows, read from `Weather.csv`.
-- `src/files.rs`: reads text files, with errors that say which file.
+- `src/files.rs`: reads text files and reports file paths in errors.
 - `src/output.rs`: writes the results.
 - `src/error.rs`: the errors the library returns.
 - `tests/sb_asc_reference.rs`: runs the program and compares its outputs with C2F-W's.

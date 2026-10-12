@@ -1,4 +1,4 @@
-//! An instance folder: the inputs of a simulation, in the same layout C2F-W uses.
+//! Simulation inputs from a C2F-W instance folder.
 
 use crate::error::InputError;
 use crate::files::read_text;
@@ -33,7 +33,7 @@ impl Instance {
             None
         };
 
-        // A missing projection is fine: the outputs will just have none either.
+        // Without an input projection, output maps have no projection file.
         let projection = fs::read_to_string(folder.join("fuels.prj")).ok();
 
         Ok(Instance {
@@ -45,8 +45,7 @@ impl Instance {
     }
 }
 
-/// Reads the ignition cell of the first row of `Ignitions.csv`, whose columns are a year
-/// and a cell numbered from 1.
+/// Reads the first ignition from `Ignitions.csv`: a year and a cell numbered from 1.
 fn read_ignition(path: &Path) -> Result<usize, InputError> {
     let text = read_text(path)?;
     let first_row = text.lines().nth(1).ok_or_else(|| InputError::NoRows {

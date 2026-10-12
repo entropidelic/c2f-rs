@@ -1,4 +1,4 @@
-//! Reading text files, with errors that say which file and which value.
+//! Text-file reading and parsing, with file paths and invalid values in errors.
 
 use crate::error::InputError;
 use std::fs;

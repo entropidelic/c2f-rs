@@ -1,7 +1,6 @@
-//! Runs the c2f-rs program on the 7x7 `sb-asc` instance and compares its output files with
-//! C2F-W's: Scott & Burgan fuels, moisture scenario 1, wind of 10 km/h from the south for
-//! 5 hours, no elevation. C2F-W ran 113 fires there, each one from a random ignition cell
-//! that it logged.
+//! Compares CLI output with 113 C2F-W reference fires on the 7×7 `sb-asc` grid:
+//! Scott & Burgan fuels, moisture scenario 1, a 10 km/h southerly wind for 5 hours,
+//! and no elevation. Each run uses the ignition cell logged by C2F-W.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,7 +14,7 @@ const NO_DATA: f32 = -9999.0;
 /// C2F-W writes the rate rounded up to two decimals.
 type MessageKey = (usize, usize, u32, i64);
 
-/// Ignition cell of every simulation.
+/// Ignition cell for each reference simulation.
 fn read_ignition_cells() -> Vec<usize> {
     let text = fs::read_to_string(format!("{DATA}/expected/ignition_and_weather_log.csv")).unwrap();
     text.lines()
@@ -24,7 +23,7 @@ fn read_ignition_cells() -> Vec<usize> {
         .collect()
 }
 
-/// Number of burnt cells of every simulation, from the results tables in C2F-W's log.
+/// Burnt cell counts from the results tables in C2F-W's log.
 fn read_burnt_counts() -> Vec<usize> {
     let text = fs::read_to_string(format!("{DATA}/expected/log.txt")).unwrap();
     text.lines()
@@ -33,7 +32,7 @@ fn read_burnt_counts() -> Vec<usize> {
         .collect()
 }
 
-/// C2F-W's messages of a simulation, sorted. C2F-W writes them in hash map order.
+/// Sorted reference messages; C2F-W writes them in hash-map order.
 ///
 /// C2F-W writes fire period numbers instead of times. Its period 0 already spreads the
 /// fire for one minute, so a fire that arrives after 4 minutes is written as period 3.
@@ -58,7 +57,7 @@ fn read_expected_messages(simulation: usize) -> Vec<MessageKey> {
     messages
 }
 
-/// Our messages, sorted, with the rate rounded up like C2F-W does.
+/// Sorted c2f-rs messages, with rates rounded up as in C2F-W.
 fn read_computed_messages(path: &Path) -> Vec<MessageKey> {
     let mut messages: Vec<MessageKey> = fs::read_to_string(path)
         .unwrap()

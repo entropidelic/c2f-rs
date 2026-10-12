@@ -1,14 +1,12 @@
 //! Fire spread over the landscape, one fire period (a minute by default) at a time.
 //!
-//! Every burning cell spreads towards its neighbours that have fuel and are not on fire
-//! yet. The fire advances towards each of them at the rate given by the fire ellipse.
-//! When it reaches the centre of a neighbour, a message is sent, and the neighbour
-//! ignites if its own fire would be strong enough. A burning cell burns out when its
-//! fire is too weak or there is nothing left around it to burn.
+//! Burning cells spread towards unburnt neighbours with fuel, at rates given by
+//! the fire ellipse. A neighbour ignites when the fire reaches its centre if its
+//! head rate of spread exceeds the threshold. Successful ignitions produce
+//! messages. Cells burn out when spread is too slow or no neighbours remain available.
 //!
-//! A [`Simulation`] is a running fire that advances one step at a time, so a program can
-//! look at it, or change the weather, between steps. [`simulate`] runs a whole fire with
-//! a table of hourly weather.
+//! [`Simulation`] lets callers inspect the fire and change weather between steps.
+//! [`simulate`] runs a whole fire using a weather table.
 
 use crate::ellipse::{FireEllipse, heading_from_wind};
 use crate::error::SimulationError;
@@ -40,8 +38,7 @@ impl Default for Settings {
     }
 }
 
-/// The fire spread from one cell to a neighbour: it reached the neighbour's centre and
-/// set it on fire.
+/// A spread event that ignited a neighbouring cell.
 #[derive(Debug, Clone, Copy)]
 pub struct Message {
     pub from: usize,
@@ -67,7 +64,7 @@ pub struct BurntCell {
 #[derive(Debug, Clone, Default)]
 pub struct Fire {
     pub messages: Vec<Message>,
-    /// Every cell that caught fire, in the order they caught fire.
+    /// Burnt cells in ignition order.
     pub burnt_cells: Vec<BurntCell>,
 }
 
@@ -75,7 +72,7 @@ pub struct Fire {
 pub struct Changes {
     /// Cells that caught fire.
     pub burnt_cells: Vec<BurntCell>,
-    /// The spreads that set them on fire.
+    /// Spread events that ignited those cells.
     pub messages: Vec<Message>,
 }
 
@@ -86,7 +83,7 @@ struct BurningCell {
     progress: [f64; 8],
 }
 
-/// A running fire. Copying it gives an independent fire that can continue differently.
+/// A running fire. Clone it to compare scenarios from the same starting state.
 #[derive(Clone)]
 pub struct Simulation {
     landscape: Landscape,
@@ -146,8 +143,7 @@ impl Simulation {
         let first_new_burnt_cell = self.fire.burnt_cells.len();
         let first_new_message = self.fire.messages.len();
 
-        // The burning cells are taken out of the simulation while they spread, so that
-        // `spread` can read the rest of it.
+        // Temporarily move burning cells out so `spread` can borrow the simulation.
         let mut arrivals = Vec::new();
         let mut still_burning = Vec::new();
         for mut burning_cell in std::mem::take(&mut self.burning) {
@@ -168,8 +164,7 @@ impl Simulation {
             }
         }
 
-        // Only arrivals that set a cell on fire become messages. A cell that could not
-        // ignite stays available, and will be reached again next step.
+        // Record only successful ignitions. Unignited cells remain available for retries.
         let ignitions = arrivals
             .into_iter()
             .filter(|arrival| !self.available[arrival.to]);
@@ -205,10 +200,9 @@ impl Simulation {
         self.fire
     }
 
-    /// Advances the fire of a burning cell for one fire period, towards its available
-    /// neighbours, and records an arrival for every neighbour whose centre has been
-    /// reached by `end_time`. A neighbour that could not ignite is reached again every
-    /// period, until it catches fire.
+    /// Advances one burning cell towards available neighbours for one fire period.
+    /// Records arrivals at neighbour centres reached by `end_time`. Neighbours
+    /// that fail to ignite are retried each period.
     ///
     /// Returns false when the cell has burnt out.
     fn spread(

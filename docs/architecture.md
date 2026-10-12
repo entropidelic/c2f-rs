@@ -1,177 +1,161 @@
 # Architecture
 
-c2f-rs should be the core of the simulation: a library that knows how fire spreads, and
-nothing else. Other programs consume it: today the command line program, and later perhaps a
-user interface that shows the fire spreading in real time and lets us interact with it,
-Python bindings, or a web service.
+c2f-rs keeps the simulation in a library. The command line program and desktop viewer
+use it; Python bindings or a web service could do the same.
 
-This document looks at how well the code fits that goal today, what would need to change,
-and the options for consumers. Nothing here is decided yet.
+This document describes the current design and possible changes. The proposed changes
+are not scheduled yet.
 
-## How the code is organised today
+## Current layout
 
 ```
-c2f-rs (one package)
+c2f-rs
 ├── library
-│   ├── scott_burgan   fuel model: fuel + wind → rates of spread, flame length, intensity
-│   ├── ellipse        fire shape: rates of spread in every direction
-│   ├── error          the errors the library returns
-│   ├── landscape      the grid of cells and fuels   (+ reads fuels.asc)
-│   ├── weather        weather rows                  (+ reads Weather.csv)
-│   ├── simulation     a running fire that advances step by step, and simulate() for a whole fire
+│   ├── scott_burgan   fuel + wind → rates of spread, flame length, intensity
+│   ├── ellipse        rates of spread in each direction
+│   ├── error          library error types
+│   ├── files          shared text-file reading and parsing
+│   ├── landscape      cell grid and fuels; reads fuels.asc
+│   ├── weather        weather rows; reads Weather.csv
+│   ├── simulation     step-by-step Simulation and whole-fire simulate()
 │   ├── instance       reads a C2F-W instance folder
-│   └── output         writes the result files
-└── program (main.rs)  command line: reads an instance, simulates, writes the results
+│   └── output         writes result files
+├── main.rs            command line program: read, simulate, write
+└── viewer/            separate workspace package: desktop app using egui
 ```
 
-## What already fits the goal
+## What works already
 
-- **The simulation is a library, and the program is only a consumer.** `main.rs` reads
-  files, calls `simulate`, and writes files. A user interface would drive a `Simulation`
-  step by step instead, without the files.
-- **A fire advances step by step** (see below), so a program can draw it, pause it, or
-  change the weather between steps.
-- **The simulation does not read or write files, nor print anything.** It takes a
-  `Landscape` and weather rows, which can be built in memory, and returns a `Fire`. File
-  reading and writing live in separate functions and modules.
-- **No global state.** Every fire is independent, so many fires can run in parallel, and
-  the same inputs always give the same fire. C2F-W shares global variables between its
-  threads.
-- **The physics is made of small pure functions** (fuel model, ellipse), easy to test and to
-  call from anywhere, for example to show a fire's shape for a given wind.
-- **It is fast enough for real time.** The 508×610 Vilopriu landscape burns for 7 hours of
-  simulated time in 0.1 seconds: about a quarter of a millisecond per simulated minute. An
-  animation at 60 frames per second has 16 milliseconds per frame.
-- **The library already compiles to WebAssembly**, the format browsers run, without changes.
+- `main.rs` reads inputs, calls `simulate` and writes results. The viewer drives a
+  `Simulation` one step at a time.
+- The simulation takes a `Landscape` and weather rows, which can be built in memory,
+  and returns a `Fire`. It does no file access or printing.
+- Each fire has its own state. Fires can run in parallel, and the same inputs give the
+  same result. C2F-W shares global variables between threads.
+- Fuel behaviour and ellipse calculations are small, pure functions. They can also be
+  used separately, for example to display a fire's shape for a given wind.
+- A 508×610 Vilopriu landscape takes about 0.1 seconds to simulate 7 hours of fire:
+  roughly 0.25 milliseconds per simulated minute. A 60 fps animation has about
+  16 milliseconds per frame.
+- The library compiles to WebAssembly without changes.
 
-## What does not fit yet
+## Current limits
 
-1. **Few ways to change a running fire yet.** The weather can change at every step, and
-   new fires can be started, but there is no way to mark cells as unburnable (firebreaks,
-   firefighting lines) during a fire. It is easy to add when a user interface needs it.
-2. **The fuel model is hard-wired.** The simulation calls Scott & Burgan directly. Adding
-   Kitral or FBP (layers 5 and 8) needs a common way to ask "how does this cell burn under
-   this weather?".
-3. **The library is still one package.** The viewer is a separate package in a Cargo
-   workspace, but it depends on the whole library, so file reading and writing, and the
-   command line dependency (`clap`), are compiled into it. That is fine on the desktop. A
-   browser version would need the split described below.
+- Weather can change between steps, and new fires can be started, but cells cannot yet
+  be marked as unburnable during a run. Firebreaks and firefighting lines need that API.
+- The simulation calls Scott & Burgan directly. Kitral and FBP (roadmap layers 5 and 8)
+  will need a common fuel model interface.
+- The viewer depends on the whole library, including file I/O and the command line
+  dependency (`clap`). A browser app would benefit from separating those dependencies.
 
-## A fire that advances step by step (done)
+## Step-by-step simulation
 
-A running fire is a value that consumers hold and drive:
+A caller owns a `Simulation` and advances it when needed:
 
 ```rust
 let mut simulation = Simulation::new(landscape, &settings)?;
 simulation.ignite(cell, &weather)?;
 while !simulation.is_over() {
-    let changes = simulation.step(&weather);   // one fire period, under this weather
-    draw(&changes.burnt_cells);                // only the cells that just caught fire
-    // between steps: change the weather, start another fire, ...
+    let changes = simulation.step(&weather);   // one fire period
+    draw(&changes.burnt_cells);                // newly ignited cells
+    // Change weather or start another fire between steps.
 }
-let fire = simulation.into_fire();             // every burnt cell and message
+let fire = simulation.into_fire();             // all burnt cells and messages
 ```
 
-- `step` advances one fire period and returns what changed: the cells that caught fire and
-  the messages. A user interface only redraws those cells.
-- The weather is given at every step, so it can come from a file, a slider in a user
-  interface, or a weather forecast.
-- `ignite` starts a fire at any cell, at any time, so a fire can have several origins.
-- A `Simulation` owns its landscape, so a program can keep it as a single value.
-  `landscape()` gives read access to the grid.
-- A `Simulation` can be copied, to let two copies of the same fire continue differently and
-  compare them ("what if" scenarios). Its state is small: a flag per cell, and the burning
-  cells with how far their fire has advanced towards each neighbour.
-- `simulate` runs a whole fire with a table of hourly weather, as a short loop over `step`.
-  The command line program uses it.
+- `step` returns newly ignited cells and spread messages, so a UI can redraw just those
+  cells.
+- Weather is supplied at each step. It can come from a file, UI controls or a forecast.
+- `ignite` starts a fire at a cell at any time, allowing several ignition points.
+- `Simulation` owns its landscape; `landscape()` provides read access to the grid.
+- Cloning a simulation gives an independent copy for comparing scenarios. The propagation
+  state consists of a flag per cell and each burning cell's progress towards its neighbours.
+- `simulate` runs a whole fire using a table of hourly weather. It wraps `step` in a loop
+  and is used by the command line program.
 
-## Typed errors (done)
+## Errors
 
-The library returns typed errors, made with `thiserror`, so a program can tell them apart
-and react to each one:
+The library uses `thiserror` to return error types that callers can match:
 
-- `InputError`, reading the input files: a file that cannot be read, an invalid value, a
-  missing header entry or column, a file with no rows, a raster with the wrong size.
-- `SimulationError`, starting or running a fire: a fuel code without a fuel model, a cell
-  outside the landscape, no weather.
-- `OutputError`, writing the results.
+- `InputError`: unreadable files, invalid values, missing headers or columns, empty files,
+  and raster size mismatches.
+- `SimulationError`: unknown fuel models, cells outside the landscape or missing weather.
+- `OutputError`: failures when writing results.
 
-Each one carries the details (which file, which value, which cell), and prints a message a
-person can read. The command line program just prints them. It checks the user's input
-itself where the message needs the user's point of view, such as cells numbered from 1.
+Errors include the relevant file, value or cell and have readable messages. The command
+line program prints them. It validates CLI-specific input itself, such as cell numbers
+starting at 1.
 
-## The viewer (first prototype)
+## Desktop viewer
 
-`viewer/` is a desktop app made with egui. It is the first program built on the
-`Simulation`, and lives in the same Cargo workspace as the library. It shows the fuel map,
-with burnt cells coloured by how long ago they caught fire, so the fire front glows. The
-user can play, pause, step and reset the fire, choose how many simulated minutes pass per
-frame and after how many hours to stop (by default as long as the weather file covers, like
-C2F-W), set the wind with sliders while the fire runs, change the fuel moisture scenario,
-click on the map to start fires, and zoom and pan the map.
+`viewer/` uses egui and the `Simulation` API. It displays the fuel map and colours burnt
+cells by time since ignition, making the fire front stand out.
 
-Not in this first version: drawing firebreaks, comparing "what if" copies, following the
-weather file hour by hour, a real map underneath, and the browser version.
+The controls let you:
+
+- Play, pause, step or reset the simulation.
+- Set the simulated minutes per frame and the time limit. The default limit is the
+  duration covered by the weather file, as in C2F-W.
+- Adjust wind speed and direction while the fire runs.
+- Change the fuel moisture scenario.
+- Click to start fires, scroll to zoom and drag to pan.
+
+The prototype does not yet support firebreaks, side-by-side scenario comparisons,
+hourly updates from the weather file, a basemap or running in the browser.
 
 ## Proposed changes
 
-### A common fuel model interface
+### Common fuel model interface
 
-When Kitral is added (layer 5), introduce a common interface for fuel models:
-given a cell and the weather, return the head and back rates of spread, the length-to-breadth
-ratio, the intensity and the flame length. Scott & Burgan, Kitral, Portugal and FBP each
-implement it. The simulation only knows the interface.
+Add this when implementing Kitral (layer 5). Given a cell and weather, each model would
+return head and back rates of spread, length-to-breadth ratio, intensity and flame length.
+Scott & Burgan, Kitral, Portugal and FBP would implement the same interface.
 
-### Separate packages, when a second consumer appears
+### Separate core, I/O and CLI packages
 
-Split the package into a Cargo workspace:
+The workspace already contains the viewer. If a browser app or another integration
+needs fewer dependencies, split the library into:
 
 | Package | Contents | Depends on |
 |---|---|---|
-| `c2f-core` | fuel models, ellipse, landscape, weather, simulation | nothing |
-| `c2f-io` | reading instance folders, writing results; later GeoTIFF | `c2f-core` |
-| `c2f-cli` | the command line program | `c2f-core`, `c2f-io`, `clap` |
-| a user interface, Python bindings, ... | | `c2f-core`, maybe `c2f-io` |
+| `c2f-core` | Fuel models, ellipse, landscape, weather, simulation | No I/O or CLI dependencies |
+| `c2f-io` | Instance reading, result writing; later GeoTIFF | `c2f-core` |
+| `c2f-cli` | Command line program | `c2f-core`, `c2f-io`, `clap` |
+| UI or Python bindings | Application or language bindings | `c2f-core`, optionally `c2f-io` |
 
-This is cheap to do, but only worth it when there is a second consumer. Until then, keeping
-the simulation free of file access and printing (as it is) is enough.
+For now, keeping file access and printing outside the simulation is enough.
 
-## Options for consumers
+## Possible integrations
 
 ### User interfaces
 
-| Option | What it is | Pros | Cons |
-|---|---|---|---|
-| **egui / eframe** | A simple Rust user interface library | All Rust. One code base runs as a desktop app and in the browser. Quick to build sliders, buttons and a grid that redraws every step | Basic looks. No real map underneath (no satellite imagery or roads) unless we add it |
-| **WebAssembly + web page** | The core compiled for the browser, with the interface in JavaScript or TypeScript, for example a canvas, or MapLibre for a real map | Nothing to install, easy to share a link. Real maps with MapLibre or deck.gl | Two languages. Files must be uploaded or downloaded, the browser cannot read local folders freely |
-| **Tauri** | A desktop app with a web interface and Rust behind it | Web interface with full access to local files, and native speed | Desktop only, more moving parts |
-| **Bevy** | A Rust game engine | Excellent for real-time interaction, smooth animation, 3D terrain | Large, and it organises programs its own way. Probably more than we need |
-
-### Other consumers
-
-| Option | What it is | Why it could matter |
+| Option | Advantages | Limitations |
 |---|---|---|
-| **Python bindings** (PyO3 and maturin) | `import c2f` in Python | Fits how the field works: notebooks, the fire2a tools, and the QGIS plugin, which is written in Python. Could make c2f-rs a drop-in engine for existing users |
-| **Web service** (for example axum) | Simulations run on a server and stream their steps to web clients | Many users, heavy batches of simulations, shared results. Needs hosting |
-| **Many simulations in parallel** (rayon) | Thousands of fires with random ignitions and weather | Burn probability maps (layer 6). The lack of global state makes this straightforward |
+| **egui / eframe** | All Rust; supports desktop and browser; quick to build controls and a grid view | Basic styling; satellite imagery and roads would need extra work |
+| **WebAssembly + web page** | Shareable link; JavaScript or TypeScript UI; MapLibre or deck.gl for maps | Two languages; local files must be selected or uploaded |
+| **Tauri** | Web UI with Rust simulation and access to local files | Desktop app; more components to maintain |
+| **Bevy** | Animation, real-time interaction and 3D terrain | Large dependency; requires adopting its application structure |
 
-### Interactions a user interface could offer
+### Other uses
 
-- Play, pause, speed up, and step through the fire minute by minute.
-- Click to start a fire, or several.
-- Change the wind speed and direction while the fire runs.
-- Draw firebreaks or firefighting lines, and see the fire react.
-- Scrub back in time. This is cheap, because the arrival time of every cell is already
-  recorded.
-- Compare two "what if" scenarios side by side, from a copy of the same running fire.
-- Show a cell's fire behaviour on hover: fuel, rate of spread, intensity, flame length.
+| Option | Use |
+|---|---|
+| **Python bindings** (PyO3 and maturin) | `import c2f` for notebooks, fire2a tools or the Python-based QGIS plugin |
+| **Web service** (for example axum) | Server-side simulation with steps streamed to clients; shared results and large batches; requires hosting |
+| **Parallel simulations** (rayon) | Thousands of fires with random ignitions and weather for burn probability maps (layer 6) |
+
+### Further viewer features
+
+- Draw firebreaks or firefighting lines.
+- Scrub through recorded arrival times.
+- Compare scenarios from copies of the same running fire.
+- Show fuel, rate of spread, intensity and flame length on hover.
 
 ## Suggested order
 
-1. ~~**The step-by-step fire.**~~ Done.
-2. **The common fuel model interface**, together with Kitral (layer 5).
-3. ~~**A first user interface prototype with egui.**~~ Done: the `viewer` package. The
-   split of the library into core, input/output and command line packages can wait until
-   a browser version or another consumer needs it.
-4. **Python bindings**, if c2f-rs is to be used from notebooks, fire2a or QGIS.
-5. A map-based web interface, or a web service, once the core is stable.
+1. Step-by-step simulation API: done.
+2. Common fuel model interface with Kitral (layer 5).
+3. First egui viewer: done. Split the library packages when a browser app or another
+   integration needs it.
+4. Python bindings, if needed for notebooks, fire2a or QGIS.
+5. Map-based web interface or web service once the core is stable.

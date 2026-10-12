@@ -5,12 +5,12 @@
 #     "numpy>=2.0.2",
 # ]
 # ///
-"""Draws the result of a c2f-rs run: the fuel map next to the fire's arrival time.
+"""Plot the fuel map beside the arrival-time map from a c2f-rs run.
 
 Usage:
     uv run scripts/plot_fire.py <results folder> <fuels.asc> [image.png]
 
-The image is saved to <results folder>/fire.png unless another path is given.
+Saves to <results folder>/fire.png unless another path is given.
 uv installs the Python version and packages pinned in plot_fire.py.lock on first use.
 """
 

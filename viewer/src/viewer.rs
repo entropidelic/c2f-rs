@@ -1,4 +1,4 @@
-//! The viewer window: a side panel with the controls, and the map of the fire.
+//! Viewer window with simulation controls and a fire map.
 
 use crate::colours::{fire_colour, fuel_colour};
 use c2f_rs::error::SimulationError;
@@ -13,7 +13,7 @@ use eframe::egui::{
 
 pub struct Viewer {
     landscape: Landscape,
-    /// The ignition cell of the instance's `Ignitions.csv`, lit at every reset.
+    /// Ignition cell from `Ignitions.csv`, ignited on each reset.
     initial_ignition: Option<usize>,
     settings: Settings,
     simulation: Simulation,
@@ -22,7 +22,7 @@ pub struct Viewer {
     minutes_per_frame: u32,
     /// The viewer pauses when the fire has run this long.
     stop_after_hours: u32,
-    /// The colour of every cell before any fire: its fuel.
+    /// Fuel colours before ignition.
     fuel_colours: Vec<Color32>,
     map_texture: TextureHandle,
     /// 1 shows the whole landscape; larger values zoom in.
@@ -70,7 +70,7 @@ impl Viewer {
             wind,
             playing: false,
             minutes_per_frame: 5,
-            // As long as the weather file covers, at one row per hour, like C2F-W does.
+            // Default to the weather file's duration: one hour per row, as in C2F-W.
             stop_after_hours: instance.weather.len().max(1) as u32,
             fuel_colours,
             map_texture,
@@ -182,8 +182,7 @@ impl Viewer {
         }
     }
 
-    /// A compass with an arrow pointing where the wind blows to, which is where it pushes
-    /// the fire.
+    /// Compass arrow pointing downwind, in the fire's direction of travel.
     fn wind_compass(&self, ui: &mut egui::Ui) {
         let size = 100.0;
         let (response, painter) = ui.allocate_painter(vec2(size, size), Sense::hover());
@@ -271,7 +270,7 @@ impl Viewer {
         );
     }
 
-    /// The fuel colours, with every burnt cell coloured by how long ago it caught fire.
+    /// Fuel map with burnt cells coloured by time since ignition.
     fn map_image(&self) -> ColorImage {
         let mut pixels = self.fuel_colours.clone();
         let now = self.simulation.time();
@@ -281,7 +280,7 @@ impl Viewer {
         ColorImage::new([self.landscape.columns, self.landscape.rows], pixels)
     }
 
-    /// Where the map is drawn: as large as fits in `area` at zoom 1, then zoomed and moved.
+    /// Map bounds: fit to `area` at zoom 1, then apply zoom and pan.
     fn map_rect(&self, area: Rect) -> Rect {
         let columns = self.landscape.columns as f32;
         let rows = self.landscape.rows as f32;
@@ -293,7 +292,7 @@ impl Viewer {
         )
     }
 
-    /// The cell under a point of the screen, if any.
+    /// Cell at a screen position, if the point lies on the map.
     fn cell_at(&self, position: Pos2, map_rect: Rect) -> Option<usize> {
         if !map_rect.contains(position) {
             return None;

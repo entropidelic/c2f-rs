@@ -1,9 +1,9 @@
 //! Scott & Burgan surface fire model, as used by C2F-W.
 //!
-//! C2F-W does not run the physical Rothermel equations. For every Scott & Burgan
-//! fuel model and fuel moisture scenario it uses two curves fitted against wind
-//! speed: one for the head rate of spread and one for the flame length.
-//! Everything else is derived from those two values and the wind speed.
+//! For each fuel model and moisture scenario, C2F-W uses two curves fitted to
+//! wind speed: head rate of spread and flame length. The remaining values are
+//! derived from these and the wind speed, rather than evaluating Rothermel
+//! equations directly.
 
 mod coefficients;
 

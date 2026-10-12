@@ -1,12 +1,12 @@
 # Resources
 
-A reading list for understanding fire spread modelling and C2F-W, roughly from intuition
-to implementation details.
+Papers, guides and code for understanding fire spread modelling and C2F-W, starting
+with overviews and moving into implementation details.
 
-## 1. Intuition
+## 1. Overviews
 
 - **Sullivan (2009), *Wildland surface fire spread modelling, 1990–2007*, part 3: simulation models.**
-  The best single overview of how fire spread is simulated: cell grids, Huygens-style
+  An overview of fire spread simulation: cell grids, Huygens-style
   wave fronts, shortest-path methods. https://arxiv.org/abs/0706.4130
   Parts 1 (physical models) and 2 (empirical models): https://arxiv.org/abs/0706.3074,
   https://arxiv.org/abs/0706.4128
@@ -21,7 +21,7 @@ to implementation details.
   messages to neighbours, validation on the Dogrib fire.
   https://www.frontiersin.org/journals/forests-and-global-change/articles/10.3389/ffgc.2021.692706/full
 - **C2F-W tutorial slides** (`C2FS&B_Tutorial.pdf` in the C2F-W repository). How to run the
-  Scott & Burgan version: inputs, flags, outputs. A usage manual, not theory.
+  Scott & Burgan version: inputs, flags and outputs.
 - **fire2a documentation.** https://fire2a.github.io/docs/
 - **González-Olabarria et al. (2023), *A fire spread simulator to support tactical management
   decisions for Mediterranean landscapes*.** The Scott & Burgan variant implemented in C2F-W.
@@ -33,9 +33,9 @@ to implementation details.
   landscapes*.** Compares Cell2Fire with Prometheus and FARSITE.
   https://pmc.ncbi.nlm.nih.gov/articles/PMC12254405/
 
-Note: C2F-W's Scott & Burgan model does not evaluate the Rothermel equations. It uses curves
-fitted per fuel model and moisture scenario. The Rothermel references below explain the
-physics behind those curves, not C2F-W's exact numbers.
+C2F-W's Scott & Burgan model uses curves fitted per fuel model and moisture scenario.
+The Rothermel references below explain the underlying physics; they do not reproduce
+C2F-W's exact values.
 
 ## 3. Fire behaviour models
 
@@ -44,7 +44,7 @@ physics behind those curves, not C2F-W's exact numbers.
 - **Pyretechnics documentation.** Rothermel's surface fire, crown fire and fire spread,
   explained alongside the code. https://pyregence.github.io/pyretechnics/
 - **Andrews (2018), RMRS-GTR-371, *The Rothermel surface fire spread model and associated
-  developments*.** The definitive guide: every equation, unit and later correction.
+  developments*.** A detailed guide to the equations, units and later corrections.
   https://www.frames.gov/catalog/26103
 - **Rothermel (1972), INT-115.** The original surface fire spread model.
   https://www.frames.gov/documents/behaveplus/publications/Rothermel_1972_INT-RP-115.pdf
@@ -72,7 +72,7 @@ physics behind those curves, not C2F-W's exact numbers.
 
 ## 5. Reference implementations and test data
 
-Useful to validate future additions independently from C2F-W:
+These provide independent checks for future additions:
 
 - **firelab/behave** (C++, the BehavePlus engine). `src/testBehave/testBehave.cpp` has expected
   values for Rothermel, ellipse dimensions, crown fire and intensity.

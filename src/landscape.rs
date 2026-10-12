@@ -1,4 +1,4 @@
-//! The landscape: a grid of square cells, each with a fuel or without one.
+//! A grid of square cells with optional fuel codes.
 //!
 //! Cells are numbered from 0, row by row, starting at the top-left (north-west) corner.
 
@@ -11,7 +11,7 @@ use std::path::Path;
 pub struct Landscape {
     pub rows: usize,
     pub columns: usize,
-    /// Side of a cell, in m.
+    /// Cell side length, in m.
     pub cell_size: f64,
     /// Map coordinates of the lower-left corner of the grid.
     pub lower_left_x: f64,
@@ -45,9 +45,8 @@ const NEIGHBOUR_OFFSETS: [(isize, isize); 8] = [
 ];
 
 impl Landscape {
-    /// Reads a fuel raster in ESRI ASCII format (`fuels.asc`) and the lookup table that
-    /// says which raster values are fuels. Values missing from the table, or named
-    /// "Non-fuel" in it, cannot burn.
+    /// Reads an ESRI ASCII fuel raster (`fuels.asc`) and its fuel lookup table.
+    /// Values absent from the table or labelled "Non-fuel" cannot burn.
     pub fn read(fuels_path: &Path, lookup_table_path: &Path) -> Result<Landscape, InputError> {
         let fuel_names = read_lookup_table(lookup_table_path)?;
         let text = read_text(fuels_path)?;

@@ -1,4 +1,4 @@
-//! Colours of the map: muted ones for the fuels, bright ones for the fire.
+//! Muted fuel colours and bright fire colours.
 
 use eframe::egui::Color32;
 
@@ -19,8 +19,8 @@ pub fn fuel_colour(fuel_code: Option<u16>) -> Color32 {
     }
 }
 
-/// The colour of a burnt cell, from how long ago it caught fire: bright yellow at the
-/// fire front, through orange and red, to dark ash after a few hours.
+/// Colour by time since ignition: yellow at the fire front, then orange, red
+/// and dark ash after a few hours.
 pub fn fire_colour(minutes_since_ignition: f32) -> Color32 {
     let stops = [
         (0.0, Color32::from_rgb(255, 245, 140)),
